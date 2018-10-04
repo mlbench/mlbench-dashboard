@@ -1,4 +1,4 @@
-MLBench Helm Chart Documentation
+MLBench Dashboard Documentation
 ================================
 
 .. include:: _sidebar.rst.inc
