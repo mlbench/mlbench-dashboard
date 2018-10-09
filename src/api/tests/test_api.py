@@ -28,31 +28,20 @@ class KubePodTests(APITestCase):
             self.assertEqual(response.status_code, status.HTTP_200_OK)
 
 
-class OdelRunTests(APITestCase):
+class ModelRunTests(APITestCase):
     def test_post_job(self):
         """
         Ensure we can return a pod list
         """
-        with patch('kubernetes.config.load_incluster_config'),\
-                patch('kubernetes.client.CoreV1Api.list_namespaced_pod') as\
-                namespaced_pod,\
-                patch('api.views.stream') as stream,\
-                patch('kubernetes.client.CoreV1Api'
-                      '.connect_get_namespaced_pod_exec'):
-            ret = MagicMock(items=[
-                MagicMock(
-                    metadata=MagicMock(labels=['l1', 'l2'], namespace="ns1"),
-                    status=MagicMock(phase='Running', pod_ip='192.168.1.2')),
-                MagicMock(
-                    metadata=MagicMock(labels=['l1', 'l2'], namespace="ns1"),
-                    status=MagicMock(phase='Running', pod_ip='192.168.1.2'))])
+        with patch('api.utils.run_utils.run_model_job.delay') as delay:
+            delay.return_value = None
 
-            ret.items[0].metadata.configure_mock(name='Pod1')
-            ret.items[1].metadata.configure_mock(name='Pod1')
-
-            namespaced_pod.return_value = ret
-
-            stream.stream.return_value = "Run Successful"
-
-            response = self.client.post('/api/runs/', format='json')
+            response = self.client.post(
+                '/api/runs/',
+                {
+                    'num_cpus': '1.0',
+                    'name': 'Run1',
+                    'num_workers': 1,
+                    'max_bandwidth': 10000},
+                format='json')
             self.assertEqual(response.status_code, status.HTTP_201_CREATED)

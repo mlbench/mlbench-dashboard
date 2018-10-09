@@ -1,4 +1,5 @@
 from django.test import TestCase
+from unittest.mock import patch
 
 
 class TestViews(TestCase):
@@ -8,6 +9,10 @@ class TestViews(TestCase):
         self.assertTemplateUsed(response, 'main/index.html')
 
     def test_call_test_loads(self):
-        response = self.client.get('/test')
-        self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, 'main/test.html')
+        with patch.dict('os.environ', {
+                'MLBENCH_MAX_WORKERS': '1',
+                'MLBENCH_MAX_BANDWIDTH': '10000',
+                'MLBENCH_WORKER_MAX_CPU': '10000m'}):
+            response = self.client.get('/runs')
+            self.assertEqual(response.status_code, 200)
+            self.assertTemplateUsed(response, 'main/runs.html')
