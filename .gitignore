@@ -107,8 +107,4 @@ ENV/
 /docs/modules.rst
 /docs/refimpls/
 
-# helm
-**/charts/*.tgz
-myvalues.yaml
-
-setup_telepresence.sh
+src/django-rq-scheduler/
