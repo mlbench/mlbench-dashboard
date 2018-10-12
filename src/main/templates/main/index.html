@@ -62,7 +62,8 @@
             $.each(nodes, function(node, value){
                 $.getJSON("{% url 'api:metrics-list' %}" + node + "/",
                     {since: value['last_metrics_update'].toJSON(),
-                    metric_type:'pod'},
+                    metric_type:'pod',
+                    summarize: 1000},
                     function(data){
                         if(!('node_metrics' in value)){
                             value['node_metrics'] = [];

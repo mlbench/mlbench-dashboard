@@ -1,8 +1,5 @@
 FROM python:3.6-alpine
 
-# Copy in your requirements file
-ADD ./Docker/requirements.txt /requirements.txt
-
 # Install postgres
 ENV PG_MAJOR 9.6
 ENV PG_VERSION 9.6.8
@@ -29,6 +26,9 @@ RUN apk update && apk add build-base readline-dev openssl-dev zlib-dev libxml2-d
     rm -r /tmp/postgresql-$PG_VERSION* /var/cache/apk/*
 
 COPY ./Docker/setup-postgres.sh /
+
+# Copy in your requirements file
+ADD ./Docker/requirements.txt /requirements.txt
 
 # Install build deps, then run `pip install`, then remove unneeded build deps all in a single step. Correct the path to your production requirements file, if needed.
 RUN set -ex \

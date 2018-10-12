@@ -17,6 +17,8 @@ import pytz
 import zipfile
 import io
 import json
+from math import ceil
+from statistics import mean
 
 
 class KubePodView(ViewSet):
@@ -36,7 +38,7 @@ class KubeMetricsView(ViewSet):
     """Handles the /api/metrics endpoint
     """
 
-    def __format_result(self, metrics, q):
+    def __format_result(self, metrics, q, summarize):
         # get available kind of metrics
         names = metrics.values('name').distinct()
 
@@ -47,11 +49,25 @@ class KubeMetricsView(ViewSet):
             temp_filter = q & Q(name=name)
             filtered_metrics = metrics.filter(temp_filter).order_by('date')\
                 .values('date', 'value', 'cumulative')
-            result[name] = list(filtered_metrics)
+            filtered_metrics = list(filtered_metrics)
+
+            metric_count = len(filtered_metrics)
+
+            if summarize and metric_count > summarize:
+                factor = ceil(metric_count / summarize)
+
+                filtered_metrics = [{
+                    'date': filtered_metrics[i]['date'],
+                    'value': str(mean([float(f['value'])
+                                  for f in filtered_metrics[i:i + factor]])),
+                    'cumulative':filtered_metrics[i]['cumulative']}
+                    for i in range(0, metric_count, factor)]
+
+            result[name] = filtered_metrics
 
         return result
 
-    def __format_zip_result(self, metrics, q, prefix, zf):
+    def __format_zip_result(self, metrics, q, summarize, prefix, zf):
         names = metrics.values('name').distinct()
 
         for name in names:
@@ -59,7 +75,21 @@ class KubeMetricsView(ViewSet):
             temp_filter = q & Q(name=name)
             filtered_metrics = metrics.filter(temp_filter).order_by('date')\
                 .values('date', 'value', 'cumulative')
-            data = json.dumps(list(filtered_metrics), indent=4,
+            filtered_metrics = list(filtered_metrics)
+
+            metric_count = len(filtered_metrics)
+
+            if summarize and metric_count > summarize:
+                factor = ceil(metric_count / summarize)
+
+                filtered_metrics = [{
+                    'date': filtered_metrics[i]['date'],
+                    'value': str(mean([float(f['value'])
+                                  for f in filtered_metrics[i:i + factor]])),
+                    'cumulative':filtered_metrics[i]['cumulative']}
+                    for i in range(0, metric_count, factor)]
+
+            data = json.dumps(filtered_metrics, indent=4,
                               cls=DjangoJSONEncoder)
 
             with io.StringIO() as metrics_file:
@@ -127,6 +157,11 @@ class KubeMetricsView(ViewSet):
             since = pytz.utc.localize(since)
             q &= Q(date__gte=since)
 
+        summarize = self.request.query_params.get('summarize', None)
+
+        if summarize is not None:
+            summarize = int(summarize)
+
         metric_type = self.request.query_params.get('metric_type', 'pod')
 
         if metric_type == 'pod':
@@ -138,7 +173,7 @@ class KubeMetricsView(ViewSet):
 
         if request.accepted_renderer.format != 'zip':
             # generate json
-            result = self.__format_result(metrics, q)
+            result = self.__format_result(metrics, q, summarize)
 
             return Response(result, status=status.HTTP_200_OK)
 
@@ -162,11 +197,11 @@ class KubeMetricsView(ViewSet):
                 if until:
                     q &= Q(date__lte=until)
 
-                zf = self.__format_zip_result(metrics, q, 'result', zf)
+                zf = self.__format_zip_result(metrics, q, summarize, 'result', zf)
 
                 for pod in pods:
                     pod_metrics = pod.metrics
-                    zf = self.__format_zip_result(pod_metrics, q, pod.name, zf)
+                    zf = self.__format_zip_result(pod_metrics, q, summarize, pod.name, zf)
 
             else:
                 zf = self.__format_zip_result(metrics, q, 'result', zf)
