@@ -111,7 +111,7 @@
 
         updateRunData();
 
-        var monitor = PodMonitor('{{run.id}}', function(){return $("#metric-dropdown a.active").text()}, "#metric-svg", 'run', '{% url 'api:metrics-list' %}');
+        var monitor = PodMonitor('{{run.id}}', function(){return $("#metric-dropdown a.active").text()}, "#metric-svg", 'run', '{% url 'api:metrics-list' %}', 1000);
 
         var dropdownClick = function(){
             $("#metric-dropdown a").removeClass("active");
