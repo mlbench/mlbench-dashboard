@@ -1,5 +1,9 @@
 from api.models import KubePod, KubeMetric, ModelRun
-from api.serializers import KubePodSerializer, ModelRunSerializer, KubeMetricsSerializer
+from api.serializers import (
+    KubePodSerializer,
+    ModelRunSerializer,
+    KubeMetricsSerializer
+    )
 from api.utils.utils import secure_filename
 
 from rest_framework.viewsets import ViewSet
@@ -59,7 +63,7 @@ class KubeMetricsView(ViewSet):
                 filtered_metrics = [{
                     'date': filtered_metrics[i]['date'],
                     'value': str(mean([float(f['value'])
-                                  for f in filtered_metrics[i:i + factor]])),
+                                 for f in filtered_metrics[i:i + factor]])),
                     'cumulative':filtered_metrics[i]['cumulative']}
                     for i in range(0, metric_count, factor)]
 
@@ -85,7 +89,7 @@ class KubeMetricsView(ViewSet):
                 filtered_metrics = [{
                     'date': filtered_metrics[i]['date'],
                     'value': str(mean([float(f['value'])
-                                  for f in filtered_metrics[i:i + factor]])),
+                                 for f in filtered_metrics[i:i + factor]])),
                     'cumulative':filtered_metrics[i]['cumulative']}
                     for i in range(0, metric_count, factor)]
 
@@ -197,11 +201,23 @@ class KubeMetricsView(ViewSet):
                 if until:
                     q &= Q(date__lte=until)
 
-                zf = self.__format_zip_result(metrics, q, summarize, 'result', zf)
+                zf = self.__format_zip_result(
+                    metrics,
+                    q,
+                    summarize,
+                    'result',
+                    zf
+                    )
 
                 for pod in pods:
                     pod_metrics = pod.metrics
-                    zf = self.__format_zip_result(pod_metrics, q, summarize, pod.name, zf)
+                    zf = self.__format_zip_result(
+                        pod_metrics,
+                        q,
+                        summarize,
+                        pod.name,
+                        zf
+                        )
 
             else:
                 zf = self.__format_zip_result(metrics, q, 'result', zf)

@@ -52,4 +52,3 @@ def remove_run_job(sender, instance, using, **kwargs):
     redis_conn = django_rq.get_connection()
     job = Job.fetch(instance.job_id, redis_conn)
     job.delete()
-

@@ -1,9 +1,8 @@
 from django.shortcuts import render
-from django.utils import timezone
 import django_rq
 from rq.job import Job
 
-from api.models import ModelRun, KubePod, KubeMetric
+from api.models import ModelRun, KubePod
 
 import os
 
