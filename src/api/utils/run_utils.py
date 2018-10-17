@@ -26,6 +26,11 @@ def limit_resources(model_run, name, namespace, job):
             'op': 'replace',
             'path': '/spec/template/spec/containers/0/resources/limits/cpu',
             'value': model_run.cpu_limit
+        },
+        {
+            'op': 'replace',
+            'path': '/spec/template/spec/containers/0/image',
+            'value': model_run.image
         }
     ]
 

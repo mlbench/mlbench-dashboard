@@ -30,6 +30,8 @@ class ModelRun(models.Model):
     num_workers = models.IntegerField(default=2)
     network_bandwidth_limit = models.IntegerField(default=10000)
 
+    image = models.CharField(max_length=100, default="mlbench/mlbench_worker")
+
     job_metadata = {}
 
     def start(self):

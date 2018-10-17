@@ -164,3 +164,8 @@ RQ_QUEUES = {
 FIXTURE_DIRS = (
    'api/fixtures/',
 )
+
+# available images
+MLBENCH_IMAGES = {
+    "Test Image": "mlbench/mlbench_worker"
+}

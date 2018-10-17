@@ -33,8 +33,9 @@
                 <div class="form-group">
                     <label for="image-name" class="col-form-label">Image:</label>
                     <select class="form-control" id="image-name" required>
-                        <option value="resnet_imagenet">Resnet Imagenet</option>
-                        <option value="linear_model">Linear Model</option>
+                        {% for name, value in images.items %}
+                            <option value="{{value}}">{{name}}</option>
+                        {% endfor %}
                         <option value="custom_image">Custom Image</option>
                       </select>
                     <div class="invalid-feedback">
@@ -83,10 +84,11 @@
     $(document).ready(function () {
         $('#add-run-modal').on('show.bs.modal', function (e) {
             //$('#run-name').val("Run " + new Date().toString());
+            $("#custom-image-collapse").collapse("hide");
+            $("#image-name").val($("#image-name option:first").val());
         });
 
         $('.collapse').collapse();
-        $("#custom-image-collapse").collapse("hide");
 
         $("#image-name").change(function(){
             if($("#image-name").val() == "custom_image"){
@@ -141,6 +143,8 @@
                     num_cpus: $('#num-cpus').val(),
                     max_memory: $('#max-memory').val(),
                     max_bandwidth: $('#max-bandwidth').val(),
+                    image_name: $('#image-name').val(),
+                    custom_image_name: $('#custom-image-name').val()
                 },
                 function( data ) {
                     location.reload();

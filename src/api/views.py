@@ -362,6 +362,11 @@ class ModelRunView(ViewSet):
 
         active_runs = ModelRun.objects.filter(state=ModelRun.STARTED)
 
+        image = d['image_name']
+
+        if image == "custom_image":
+            image = d['custom_image_name']
+
         if active_runs.count() > 0:
             return Response({
                 'status': 'Conflict',
@@ -374,7 +379,8 @@ class ModelRunView(ViewSet):
             name=d['name'],
             num_workers=d['num_workers'],
             cpu_limit=cpu,
-            network_bandwidth_limit=d['max_bandwidth']
+            network_bandwidth_limit=d['max_bandwidth'],
+            image=image
         )
 
         run.start()

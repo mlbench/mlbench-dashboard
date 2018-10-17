@@ -1,6 +1,7 @@
 from django.shortcuts import render
 import django_rq
 from rq.job import Job
+from django.conf import settings
 
 from api.models import ModelRun, KubePod
 
@@ -41,7 +42,8 @@ def runs(request):
         'max_workers': max_workers,
         'max_cpus': max_cpu,
         'max_memory': 30000,
-        'max_bandwidth': max_bandwidth})
+        'max_bandwidth': max_bandwidth,
+        "images": settings.MLBENCH_IMAGES})
 
 
 def run(request, run_id):
