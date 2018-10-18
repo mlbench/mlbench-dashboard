@@ -44,6 +44,8 @@ class ModelRunTests(APITestCase):
                     'num_workers': 1,
                     'max_bandwidth': 10000,
                     'image_name': 'custom_image',
-                    'custom_image_name': 'mlbench/mlbench_worker'},
+                    'custom_image_name': 'mlbench/mlbench_worker',
+                    'custom_image_command': 'sleep',
+                    'custom_image_all_nodes': True},
                 format='json')
             self.assertEqual(response.status_code, status.HTTP_201_CREATED)
