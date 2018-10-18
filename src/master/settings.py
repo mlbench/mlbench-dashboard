@@ -160,7 +160,13 @@ FIXTURE_DIRS = (
    'api/fixtures/',
 )
 
-# available images
+# available images. [("Name", "image", "command", send-to-all-nodes)]
 MLBENCH_IMAGES = {
-    "Test Image": "mlbench/mlbench_worker"
+    'mlbench/mlbench_worker': (
+        "Test Image",
+        '/.openmpi/bin/mpirun --mca btl_tcp_if_exclude'
+        ' docker0,lo -x LD_LIBRARY_PATH=/usr/local/nvidia/lib64 --host {hosts}'
+        ' /conda/bin/python /codes/main.py --run_id {run_id} --config-file'
+        ' /codes/configs/debug',
+        False)
 }

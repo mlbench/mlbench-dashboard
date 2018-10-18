@@ -31,6 +31,8 @@ class ModelRun(models.Model):
     network_bandwidth_limit = models.IntegerField(default=10000)
 
     image = models.CharField(max_length=100, default="mlbench/mlbench_worker")
+    command = models.CharField(max_length=1000, default="")
+    run_on_all_nodes = models.BooleanField(default=False)
 
     job_metadata = {}
 

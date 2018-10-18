@@ -14,6 +14,7 @@ from rq.job import Job
 from django.utils.dateparse import parse_datetime
 from django.db.models import Q
 from django.core.serializers.json import DjangoJSONEncoder
+from django.conf import settings
 
 from itertools import groupby
 from datetime import datetime
@@ -366,6 +367,12 @@ class ModelRunView(ViewSet):
 
         if image == "custom_image":
             image = d['custom_image_name']
+            command = d['custom_image_command']
+            run_all = d['custom_image_all_nodes']
+        else:
+            entry = settings.MLBENCH_IMAGES[image]
+            command = entry[1]
+            run_all = entry[2]
 
         if active_runs.count() > 0:
             return Response({
@@ -380,7 +387,9 @@ class ModelRunView(ViewSet):
             num_workers=d['num_workers'],
             cpu_limit=cpu,
             network_bandwidth_limit=d['max_bandwidth'],
-            image=image
+            image=image,
+            command=command,
+            run_on_all_nodes=run_all
         )
 
         run.start()
