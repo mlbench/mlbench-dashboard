@@ -52,6 +52,7 @@ var PodMonitor = function(parent_id, metric_selector, target_element, metric_typ
         d3.select(el[0]).selectAll("*").remove();
 
         var parseTime = d3.timeParse("%Y-%m-%dT%H:%M:%SZ");
+        var parseTimeLong = d3.timeParse("%Y-%m-%dT%H:%M:%S.%fZ");
 
         var cumulative = metrics['node_metrics'][value][0]['cumulative'];
 
@@ -78,7 +79,13 @@ var PodMonitor = function(parent_id, metric_selector, target_element, metric_typ
                 max = cur_val;
             }
 
-            data.push({x: parseTime(cur['date']), y: cur_val});
+            var date = parseTime(cur['date']);
+
+            if(!(date)){
+                date = parseTimeLong(cur['date']);
+            }
+
+            data.push({x: date, y: cur_val});
             prev = cur;
         }
 

@@ -130,7 +130,7 @@ def limit_resources(model_run, name, namespace, job):
 
 
 @django_rq.job('default', result_ttl=-1, timeout=-1, ttl=-1)
-def run_model_job(model_run, experiment="test_mpi"):
+def run_model_job(model_run):
     """RQ Job to execute OpenMPI
 
     Arguments:
@@ -196,41 +196,44 @@ def run_model_job(model_run, experiment="test_mpi"):
                 hosts_with_slots.append(host)
 
         # Use `question 22 <https://www.open-mpi.org/faq/?category=running#mpirun-hostfile`_ to add slots # noqa: E501
-        exec_command = [
-            '/.openmpi/bin/mpirun',
-            '--mca', 'btl_tcp_if_exclude', 'docker0,lo',
-            '-x', 'LD_LIBRARY_PATH=/usr/local/nvidia/lib64',
-            '--host', ','.join(hosts_with_slots),
-            '/conda/bin/python', "/codes/main.py",
-            '--experiment', experiment,
-            '--run_id',
-            model_run.id,
-            '--config-file', '/codes/configs/debug'
-        ]
-        job.meta['command'] = str(exec_command)
+        exec_command = model_run.command.format(
+            hosts=','.join(hosts_with_slots),
+            run_id=model_run.id)
+        job.meta['command'] = exec_command
 
-        name = ret.items[0].metadata.name
-
-        job.meta['master_name'] = name
+        job.meta['master_name'] = ret.items[0].metadata.name
         job.save()
 
-        resp = stream.stream(v1.connect_get_namespaced_pod_exec, name,
-                             ns,
-                             command=exec_command,
-                             stderr=True, stdin=False,
-                             stdout=True, tty=False,
-                             _preload_content=False,
-                             _request_timeout=None)
+        streams = []
+
+        for i, n in enumerate(ret.items):
+            name = n.metadata.name
+            cmd = exec_command.format(rank=i).split(' ')
+
+            resp = stream.stream(v1.connect_get_namespaced_pod_exec, name,
+                                 ns,
+                                 command=cmd,
+                                 stderr=True, stdin=False,
+                                 stdout=True, tty=False,
+                                 _preload_content=False,
+                                 _request_timeout=None)
+            streams.append(resp)
+
+            if not model_run.run_on_all_nodes:
+                break
 
         # keep writing openmpi output to job metadata
-        while resp.is_open():
-            resp.update(timeout=None)
-            if resp.peek_stdout():
-                out = resp.read_stdout()
-                job.meta['stdout'] += out.splitlines()
-            if resp.peek_stderr():
-                err = resp.read_stderr()
-                job.meta['stderr'] += err.splitlines()
+        while any(s.is_open() for s in streams):
+            for s in streams:
+                if not s.is_open():
+                    continue
+                s.update(timeout=None)
+                if s.peek_stdout():
+                    out = s.read_stdout()
+                    job.meta['stdout'] += out.splitlines()
+                if s.peek_stderr():
+                    err = s.read_stderr()
+                    job.meta['stderr'] += err.splitlines()
 
             job.save()
 

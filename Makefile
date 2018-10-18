@@ -70,6 +70,6 @@ servedocs: docs ## compile the docs watching for changes
 
 
 publish-docker: ## Build, Tag and Publish a docker file to a local repository. Usage: make publish-docker docker_registry=localhost:5000
-	docker build -f Docker/Dockerfile -t mlbench_master:latest .
-	docker tag mlbench_master:latest $(docker_registry)/mlbench_master:latest
+	docker build -f Docker/Dockerfile -t $(docker_registry)/mlbench_master:latest .
+	#docker tag mlbench_master:latest $(docker_registry)/mlbench_master:latest
 	docker push $(docker_registry)/mlbench_master:latest
