@@ -6,6 +6,7 @@ from rq import get_current_job
 import os
 from time import sleep
 import socket
+import time
 
 
 def limit_resources(model_run, name, namespace, job):
@@ -31,6 +32,12 @@ def limit_resources(model_run, name, namespace, job):
             'op': 'replace',
             'path': '/spec/template/spec/containers/0/image',
             'value': model_run.image
+        },
+        {
+            # force redeploy even if nothing changes
+            'op': 'replace',
+            'path': '/spec/template/metadata/labels/date',
+            'value': str(time.time())
         }
     ]
 

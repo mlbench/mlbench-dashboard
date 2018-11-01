@@ -369,6 +369,8 @@ class ModelRunView(ViewSet):
             image = d['custom_image_name']
             command = d['custom_image_command']
             run_all = d['custom_image_all_nodes']
+            if isinstance(run_all, str):
+                run_all = run_all == 'true'
         else:
             entry = settings.MLBENCH_IMAGES[image]
             command = entry[1]
