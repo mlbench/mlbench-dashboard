@@ -1,1 +1,10 @@
-.. include:: ../README.rst
+
+.. _mlbench_dashboard_api:
+
+MLBench Dashboard
+=================
+.. toctree::
+   :maxdepth: 1
+
+   readme_link
+   api
