@@ -205,7 +205,8 @@ def run_model_job(model_run):
         # Use `question 22 <https://www.open-mpi.org/faq/?category=running#mpirun-hostfile`_ to add slots # noqa: E501
         exec_command = model_run.command.format(
             hosts=','.join(hosts_with_slots),
-            run_id=model_run.id)
+            run_id=model_run.id,
+            rank=0)
         job.meta['command'] = exec_command
 
         job.meta['master_name'] = ret.items[0].metadata.name
@@ -215,7 +216,10 @@ def run_model_job(model_run):
 
         for i, n in enumerate(ret.items):
             name = n.metadata.name
-            cmd = exec_command.format(rank=i).split(' ')
+            cmd = model_run.command.format(
+                hosts=','.join(hosts_with_slots),
+                run_id=model_run.id,
+                rank=i).split(' ')
 
             resp = stream.stream(v1.connect_get_namespaced_pod_exec, name,
                                  ns,
