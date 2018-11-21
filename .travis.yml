@@ -1,7 +1,6 @@
 # Config file for automatic testing at travis-ci.org
 env:
   global:
-    - docker_url=registry.hub.docker.com
     - docker_repository=mlbench
 jobs:
   include:
@@ -28,21 +27,21 @@ jobs:
         - docker
       install: true
 
-      before_script: echo "$DOCKER_PASSWORD" | docker login --username "$DOCKER_USERNAME" --password-stdin ${docker_url}
+      before_script: echo "$DOCKER_PASSWORD" | docker login --username "$DOCKER_USERNAME" --password-stdin
       script:
-        - docker build -f Docker/Dockerfile -t ${docker_url}/${docker_repository}/mlbench_master:travis-ci-test .
+        - docker build -f Docker/Dockerfile -t ${docker_repository}/mlbench_master:travis-ci-test .
 
     - stage: deploy develop
       if: branch = develop
       language: bash
       services: docker
       before_install:
-        - echo "$DOCKER_PASSWORD" | docker login --username "$DOCKER_USERNAME" --password-stdin ${docker_url}
+        - echo "$DOCKER_PASSWORD" | docker login --username "$DOCKER_USERNAME" --password-stdin
       before_script:
         - docker pull ${docker_repository}/mlbench_master:travis-ci-test
-        - docker tag ${docker_repository}/mlbench_master:travis-ci-test ${docker_url}/${docker_repository}/mlbench_master:develop
+        - docker tag ${docker_repository}/mlbench_master:travis-ci-test ${docker_repository}/mlbench_master:develop
       script:
-        - docker push ${docker_url}/${docker_repository}/mlbench_master:develop
+        - docker push ${docker_repository}/mlbench_master:develop
 
     - stage: deploy
       if: branch = master
@@ -50,14 +49,14 @@ jobs:
       services: docker
       before_install:
         - export MASTER_VERSION=$(awk '$1 == "__version__" { print $3; exit }' src/__init__.py)
-        - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin ${docker_url}
+        - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
       before_script:
         - docker pull ${docker_repository}/mlbench_master:travis-ci-test
-        - docker tag ${docker_repository}/mlbench_master:travis-ci-test ${docker_url}/${docker_repository}/mlbench_master:latest
-        - docker tag ${docker_repository}/mlbench_master:travis-ci-test ${docker_url}/${docker_repository}/mlbench_master:${MASTER_VERSION}
+        - docker tag ${docker_repository}/mlbench_master:travis-ci-test ${docker_repository}/mlbench_master:latest
+        - docker tag ${docker_repository}/mlbench_master:travis-ci-test ${docker_repository}/mlbench_master:${MASTER_VERSION}
       script:
-        - docker push ${docker_url}/${docker_repository}/mlbench_master:latest
-        - docker push ${docker_url}/${docker_repository}/mlbench_master:${MASTER_VERSION}
+        - docker push ${docker_repository}/mlbench_master:latest
+        - docker push ${docker_repository}/mlbench_master:${MASTER_VERSION}
 
 
 stages:

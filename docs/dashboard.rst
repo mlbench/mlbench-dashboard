@@ -1,7 +1,6 @@
-Dashboard
-^^^^^^^^^
+Dashboard Functionality
+^^^^^^^^^^^^^^^^^^^^^^^
 
-MLBench comes with a dashboard to manage and monitor the cluster and jobs.
 
 Main Page
 """""""""
@@ -35,5 +34,3 @@ Run Details Page
 The Run Details page shows the progress and result of an experiment. You can track metrics like ``train loss`` and ``validation accuracy`` as well as see the ``stdout`` and ``stderr`` logs of all workers.
 
 It also allows you to download all the metrics of a run as well as resource usage of all workers participating in the run as json files.
-
-
