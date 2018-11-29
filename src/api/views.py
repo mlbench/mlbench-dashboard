@@ -388,7 +388,7 @@ class ModelRunView(ViewSet):
             name=d['name'],
             num_workers=d['num_workers'],
             cpu_limit=cpu,
-            network_bandwidth_limit=d['max_bandwidth'],
+            # network_bandwidth_limit=d['max_bandwidth'],
             image=image,
             command=command,
             run_on_all_nodes=run_all

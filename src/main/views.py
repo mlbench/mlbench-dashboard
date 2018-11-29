@@ -6,6 +6,7 @@ from django.conf import settings
 from api.models import ModelRun, KubePod
 
 import os
+import math
 
 
 # Create your views here.
@@ -34,12 +35,18 @@ def runs(request):
         max_cpu = int(max_cpu)
 
     max_workers = int(max_workers)
+    worker_ticks = [i ** 2 for i in range(
+        1,
+        math.floor(math.sqrt(max_workers)))]
     # In runs.html we have a hardcoded bound 10000.
     max_bandwidth = max(int(float(max_bandwidth)), 10000)
 
     return render(request, 'main/runs.html', {
         'runs': runs,
         'max_workers': max_workers,
+        'worker_ticks': ', '.join(worker_ticks),
+        'worker_tick_labels': ', '.join('"{}"'.format(i ** 2)
+                                        for i in worker_ticks),
         'max_cpus': max_cpu,
         'max_memory': 30000,
         'max_bandwidth': max_bandwidth,
