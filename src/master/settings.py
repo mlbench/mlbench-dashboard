@@ -169,5 +169,12 @@ MLBENCH_IMAGES = {
         '-x LD_LIBRARY_PATH=/usr/local/nvidia/lib64 --host {hosts}'
         ' /conda/bin/python /codes/main.py --run_id {run_id} --config-file'
         ' /codes/configs/debug',
+        False),
+    'mlbench/tensorflow-cifar10-resnet:latest': (
+        "Tensorflow Cifar-10 ResNet-20 Open-MPI",
+        '/.openmpi/bin/mpirun --mca btl_tcp_if_exclude docker0,lo '
+        '-x KUBERNETES_SERVICE_HOST -x KUBERNETES_SERVICE_PORT '
+        '-x LD_LIBRARY_PATH=/usr/local/nvidia/lib64 --host {hosts} '
+        '/conda/bin/python /codes/main.py --run_id {run_id} --hosts {hosts}',
         False)
 }
