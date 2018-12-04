@@ -167,12 +167,18 @@ FIXTURE_DIRS = (
 
 # available images. [("Name", "image", "command", send-to-all-nodes)]
 MLBENCH_IMAGES = {
-    'mlbench/mlbench_worker': (
-        "Test Image",
+    'mlbench/pytorch-cifar10-resnet:1.0.0': (
+        "PyTorch Cifar-10 ResNet-20 Open-MPI",
         '/.openmpi/bin/mpirun --mca btl_tcp_if_exclude docker0,lo '
         '-x KUBERNETES_SERVICE_HOST -x KUBERNETES_SERVICE_PORT '
         '-x LD_LIBRARY_PATH=/usr/local/nvidia/lib64 --host {hosts}'
-        ' /conda/bin/python /codes/main.py --run_id {run_id} --config-file'
-        ' /codes/configs/debug',
+        ' /conda/bin/python /codes/main.py --run_id {run_id}',
+        False),
+    'mlbench/tensorflow-cifar10-resnet:1.0.0': (
+        "Tensorflow Cifar-10 ResNet-20 Open-MPI",
+        '/.openmpi/bin/mpirun --mca btl_tcp_if_exclude docker0,lo '
+        '-x KUBERNETES_SERVICE_HOST -x KUBERNETES_SERVICE_PORT '
+        '-x LD_LIBRARY_PATH=/usr/local/nvidia/lib64 --host {hosts} '
+        '/conda/bin/python /codes/main.py --run_id {run_id} --hosts {hosts}',
         False)
 }
