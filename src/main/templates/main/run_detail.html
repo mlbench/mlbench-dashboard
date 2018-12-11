@@ -66,18 +66,10 @@
                     <svg class="d-flex w-100" style="height:50rem;" id="metric-svg"></svg>
                 </div>
                 <div class="tab-pane fade scrollbar scrollbar-primary flex-grow-1" id="stdout" role="tabpanel" aria-labelledby="stdout-tab">
-                    <pre>
-                        {% for line in run.job_metadata.stdout %}
-                        {{line}}\n
-                        {% endfor %}
-                    </pre>
+                    <pre></pre>
                 </div>
                 <div class="tab-pane fade scrollbar scrollbar-primary flex-grow-1" id="stderr" role="tabpanel" aria-labelledby="stderr-tab">
-                    <pre>
-                            {% for line in run.job_metadata.stderr %}
-                            {{line}}
-                            {% endfor %}
-                    </pre>
+                    <pre></pre>
                 </div>
             </div>
         </div>
@@ -99,12 +91,29 @@
             });
         });
 
+        var stdout_count = 0;
+        var stderr_count = 0;
+
         var updateRunData = function(){
             $.getJSON("{% url 'api:run-detail' pk=run.id %}",
                 function(data){
                     $("#run-state").text(data['state']);
-                    $("#stdout pre").text(data['job_metadata']["stdout"].join("\n"));
-                    $("#stderr pre").text(data['job_metadata']["stderr"].join("\n"));
+
+                    var new_stdout_count = data['job_metadata']["stdout"].length;
+                    var new_stderr_count = data['job_metadata']["stderr"].length;
+
+                    if(new_stdout_count > stdout_count){
+                        var new_stdout = data['job_metadata']["stdout"].slice(stdout_count, new_stdout_count)
+                        $("#stdout pre").append(document.createTextNode(new_stdout.join("\n") + "\n"));
+                        stdout_count = new_stdout_count;
+                    }
+
+                    if (new_stderr_count > stderr_count){
+                        var new_stderr = data['job_metadata']["stderr"].slice(stderr_count, new_stderr_count)
+                        $("#stderr pre").append(document.createTextNode(new_stderr.join("\n") + "\n"));
+                        stderr_count = new_stderr_count;
+                    }
+
                     setTimeout(updateRunData, 1000)
                 });
         };

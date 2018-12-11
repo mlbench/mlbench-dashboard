@@ -122,18 +122,18 @@ def limit_resources(model_run, name, namespace, job):
     #     threads.append(resp)
 
     # wait for commands to execute
-    while any(t.is_open() for t in threads):
-        for resp in threads:
-            resp.update(timeout=1)
-            if resp.peek_stdout():
-                out = resp.read_stdout()
-                job.meta['stdout'] += out.splitlines()
-            if resp.peek_stderr():
-                err = resp.read_stderr()
-                job.meta['stderr'] += err.splitlines()
+    # while any(t.is_open() for t in threads):
+    #     for resp in threads:
+    #         resp.update(timeout=1)
+    #         if resp.peek_stdout():
+    #             out = resp.read_stdout()
+    #             job.meta['stdout'] += out.splitlines()
+    #         if resp.peek_stderr():
+    #             err = resp.read_stderr()
+    #             job.meta['stderr'] += err.splitlines()
 
-        job.save()
-        sleep(1)
+    #     job.save()
+    #     sleep(1)
 
 
 @django_rq.job('default', result_ttl=-1, timeout=-1, ttl=-1)
