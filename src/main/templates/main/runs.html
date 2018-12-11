@@ -68,14 +68,6 @@
                     <input id="max-memory" class="form-control" data-slider-id='ex3Slider' type="text" data-slider-min="10" data-slider-max="{{max_memory}}" data-slider-step="1" data-slider-value="{{max_memory}}"/>
                     <span id="max-memory-val">{{max_memory}}</span>
                 </div>
-                <!--<div class="form-group">
-                    <label for="max-bandwidth" class="col-form-label">Maximum Bandwidth (mbit/s):</label><br>
-                    <input id="max-bandwidth" class="form-control" data-slider-id='ex4Slider' type="text" data-slider-min="1" data-slider-max="{{max_bandwidth}}" data-slider-step="1" data-slider-value="{{max_bandwidth}}"
-                        data-slider-ticks="[1, 10 {% if max_bandwidth >= 100 %}, 100 {% if max_bandwidth >= 1000 %}, 1000 {% if max_bandwidth >= 10000 %}, 10000{% endif %}{% endif %}{% endif %}]"
-                        data-slider-ticks-labels='["1", "10" {% if max_bandwidth >= 100 %}, "100" {% if max_bandwidth >= 1000 %}, "1000" {% if max_bandwidth >= 10000 %}, "10000"{% endif %}{% endif %}{% endif %}]'
-                        data-slider-ticks-snap-bounds="30"/>
-                    <span id="max-bandwidth-val">{{max_bandwidth}}</span>
-                </div>-->
             </form>
         </div>
         <div class="modal-footer">
@@ -114,7 +106,7 @@
         // sliders
         $("#num-workers").slider({
             min: 1,
-            max: {{max_bandwidth}},
+            max: {{max_workers}},
             scale: 'logarithmic',
             step: 1
         });
@@ -132,17 +124,6 @@
             $("#max-memory-val").text(slideEvt.value);
         });
 
-        /*$("#max-bandwidth").slider({
-            min: 1,
-            max: 1000,
-            scale: 'logarithmic',
-            step: 1
-        });
-        $("#max-bandwidth").on("slide", function(slideEvt) {
-            $("#max-bandwidth-val").text(slideEvt.value);
-        });*/
-
-
         $('#add-run-button').click(function(){
             var form = $(".needs-validation")[0];
             if (form.checkValidity() === false) {
@@ -158,7 +139,6 @@
                     num_workers: $('#num-workers').val(),
                     num_cpus: $('#num-cpus').val(),
                     max_memory: $('#max-memory').val(),
-                    //max_bandwidth: $('#max-bandwidth').val(),
                     image_name: $('#image-name').val(),
                     custom_image_name: $('#custom-image-name').val(),
                     custom_image_command: $("#custom-image-command").val(),

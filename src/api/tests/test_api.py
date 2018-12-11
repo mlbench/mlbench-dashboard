@@ -42,7 +42,6 @@ class ModelRunTests(APITestCase):
                     'num_cpus': '1.0',
                     'name': 'Run1',
                     'num_workers': 1,
-                    'max_bandwidth': 10000,
                     'image_name': 'custom_image',
                     'custom_image_name': 'mlbench/mlbench_worker',
                     'custom_image_command': 'sleep',

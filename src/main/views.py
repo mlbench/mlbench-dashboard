@@ -26,7 +26,6 @@ def runs(request):
     runs = ModelRun.objects.all()
 
     max_workers = os.environ.get('MLBENCH_MAX_WORKERS')
-    max_bandwidth = os.environ.get('MLBENCH_MAX_BANDWIDTH')
     max_cpu = os.environ.get('MLBENCH_WORKER_MAX_CPU')
 
     if "m" in max_cpu:
@@ -38,8 +37,6 @@ def runs(request):
     worker_ticks = [str(2 ** i) for i in range(
         0,
         math.floor(math.log2(max_workers)) + 1)]
-    # In runs.html we have a hardcoded bound 10000.
-    max_bandwidth = max(int(float(max_bandwidth)), 10000)
 
     return render(request, 'main/runs.html', {
         'runs': runs,
@@ -49,7 +46,6 @@ def runs(request):
                                         for i in worker_ticks),
         'max_cpus': max_cpu,
         'max_memory': 30000,
-        'max_bandwidth': max_bandwidth,
         "images": settings.MLBENCH_IMAGES})
 
 
