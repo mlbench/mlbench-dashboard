@@ -35,9 +35,9 @@ def runs(request):
         max_cpu = int(max_cpu)
 
     max_workers = int(max_workers)
-    worker_ticks = [i ** 2 for i in range(
-        1,
-        math.floor(math.sqrt(max_workers)))]
+    worker_ticks = [str(2 ** i) for i in range(
+        0,
+        math.floor(math.log2(max_workers)) + 1)]
     # In runs.html we have a hardcoded bound 10000.
     max_bandwidth = max(int(float(max_bandwidth)), 10000)
 
@@ -45,7 +45,7 @@ def runs(request):
         'runs': runs,
         'max_workers': max_workers,
         'worker_ticks': ', '.join(worker_ticks),
-        'worker_tick_labels': ', '.join('"{}"'.format(i ** 2)
+        'worker_tick_labels': ', '.join('"{}"'.format(i)
                                         for i in worker_ticks),
         'max_cpus': max_cpu,
         'max_memory': 30000,

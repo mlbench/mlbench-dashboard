@@ -54,7 +54,8 @@
                     <label for="num-workers" class="col-form-label">Number of Workers:</label><br>
                     <input id="num-workers" class="form-control" data-slider-id='ex1Slider' type="text" data-slider-min="1" data-slider-max="{{max_workers}}" data-slider-step="1" data-slider-value="{{max_workers}}"
                         data-slider-ticks="[{{worker_ticks}}]"
-                        data-slider-ticks-labels="[{{worker_tick_labels}}]"/>
+                        data-slider-ticks-labels="[{{worker_tick_labels}}]"
+                        data-slider-ticks-snap-bounds="{{max_workers}}"/>
                     <span id="num-workers-val">{{max_workers}}</span>
                 </div>
                 <div class="form-group">
