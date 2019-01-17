@@ -36,9 +36,9 @@
 <script type="text/javascript">
     var PodMonitor = function(){
         this.nodes = {}
-        this.nodeRefreshInterval = 1 * 1000;
-        this.metricsRefreshInterval = 5 * 1000;
-        this.renderInterval = 1 * 1000;
+        this.nodeRefreshInterval = 5 * 1000;
+        this.metricsRefreshInterval = 10 * 1000;
+        this.renderInterval = 5 * 1000;
 
         var parseTime = d3.timeParse("%Y-%m-%dT%H:%M:%SZ");
 
