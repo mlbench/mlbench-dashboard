@@ -41,7 +41,7 @@ RUN set -ex \
             pcre-dev \
             git \
     && python -m venv /venv \
-    && /venv/bin/pip install -U pip \
+    && /venv/bin/pip install -U pip==18.0 \
     #&& git clone https://github.com/istrategylabs/django-rq-scheduler.git \
     #&& cd django-rq-scheduler \
     #&& LIBRARY_PATH=/lib:/usr/lib /bin/sh -c '/venv/bin/pip install --no-cache-dir . ' \
@@ -59,7 +59,7 @@ RUN set -ex \
             nginx \
             sqlite \
             supervisor \
-            redis \
+            redis=4.0.11-r0 \
             postgresql \
     && mkdir /data \
     && chown -R redis:redis /data\
