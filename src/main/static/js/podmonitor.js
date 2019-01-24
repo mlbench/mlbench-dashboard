@@ -10,6 +10,7 @@ var PodMonitor = function(parent_id, metric_selector, target_element, metric_typ
     this.api_url = api_url;
     this.metrics = [];
     this.max_points = max_points;
+    this.fetching = false;
 
     this.updateMetrics = function(){
         var parent_id = this.parent_id;
@@ -18,6 +19,13 @@ var PodMonitor = function(parent_id, metric_selector, target_element, metric_typ
         var api_url = this.api_url;
         var metrics_names = this.metrics;
         var max_points = this.max_points;
+        var parent = this;
+
+        if(parent.fetching){
+            return;
+        }
+
+        parent.fetching = true;
 
         $.getJSON(api_url + parent_id + "/",
             {since: value['last_metrics_update'].toJSON(),
@@ -38,6 +46,8 @@ var PodMonitor = function(parent_id, metric_selector, target_element, metric_typ
                     value['node_metrics'][key] = value['node_metrics'][key].concat(values);
                     value['last_metrics_update'] = new Date();
                 });
+
+                parent.fetching = false;
             });
     }
 

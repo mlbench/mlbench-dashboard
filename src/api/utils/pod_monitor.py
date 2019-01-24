@@ -7,6 +7,7 @@ import os
 import json
 import urllib
 import pytz
+import logging
 from datetime import datetime
 
 
@@ -92,7 +93,8 @@ def check_pod_status():
 def check_pod_metrics():
     """Background task to get metrics (cpu/memory etc.) of known pods
     """
-    print("running pod metrics!")
+    logger = logging.getLogger("rq.worker")
+
     from api.models.kubemetric import KubeMetric
     from api.models.kubepod import KubePod
     data = None
@@ -111,9 +113,12 @@ def check_pod_metrics():
 
             for node in nodes:
                 url = 'http://{}:10255/stats/summary/'.format(node)
-                with urllib.request.urlopen(url) as response:
-                    data = json.loads(response.read().decode('utf-8'))
-                    pods += data['pods']
+                try:
+                    with urllib.request.urlopen(url) as response:
+                        data = json.loads(response.read().decode('utf-8'))
+                        pods += data['pods']
+                except Exception as e:
+                    logger.error("Couldn't get performance data: {}, {}".format(url, repr(e)))
 
             for pod in pods:
                 if pod['podRef']['name'] not in all_pods:

@@ -40,6 +40,8 @@
         this.metricsRefreshInterval = 10 * 1000;
         this.renderInterval = 5 * 1000;
 
+        this.fetching = false;
+
         var parseTime = d3.timeParse("%Y-%m-%dT%H:%M:%SZ");
 
         this.updateNodes = function(){
@@ -58,30 +60,57 @@
 
         this.updateMetrics = function(){
             var nodes = this.nodes;
+            var parent = this;
 
-            $.each(nodes, function(node, value){
-                $.getJSON("{% url 'api:metrics-list' %}" + node + "/",
-                    {since: value['last_metrics_update'].toJSON(),
-                    metric_type:'pod',
-                    summarize: 1000},
+            if (parent.fetching){
+                return;
+            }
+
+            parent.fetching = true;
+            var fetch = function(keys, nodes, i){
+                var node_name = keys[i];
+                var node = nodes[keys[i]];
+
+                $.getJSON("{% url 'api:metrics-list' %}" + node_name + "/",
+                    {
+                        since: node['last_metrics_update'].toJSON(),
+                        metric_type:'pod',
+                        summarize: 1000
+                    },
                     function(data){
-                        if(!('node_metrics' in value)){
-                            value['node_metrics'] = [];
+                        if(!('node_metrics' in node)){
+                            node['node_metrics'] = [];
                         }
 
                         $.each(data, function(key, values){
-                            if(!(key in value['node_metrics'])){
-                                value['node_metrics'][key] = [];
+                            if(!(key in node['node_metrics'])){
+                                node['node_metrics'][key] = [];
                             }
-                            value['node_metrics'][key] = value['node_metrics'][key].concat(values);
-                            value['last_metrics_update'] = new Date();
+
+                            node['node_metrics'][key] = node['node_metrics'][key].concat(values);
+                            node['last_metrics_update'] = new Date();
                         });
-                    });
-            });
+
+                        if(i < keys.length - 1){
+                            fetch(keys, nodes, i+1);
+                        }else{
+                            parent.fetching = false;
+                        }
+                    }
+                );
+            }
+
+            var keys = Object.keys(nodes);
+
+            if(!(keys) || keys.length == 0){
+                return;
+            }
+
+            fetch(keys, nodes, 0);
         }
 
         this.plotMetrics = function(element, metrics, value, title, transform){
-            if(!(metrics['node_metrics']) || metrics['node_metrics'][value].length == 0){
+            if(!(metrics['node_metrics']) || !(metrics['node_metrics'][value]) || metrics['node_metrics'][value].length == 0){
                 return;
             }
 
