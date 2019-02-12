@@ -24,6 +24,7 @@ import io
 import json
 from math import ceil
 from statistics import mean
+from itertools import islice, takewhile, repeat
 
 
 class KubePodView(ViewSet):
@@ -54,21 +55,35 @@ class KubeMetricsView(ViewSet):
             temp_filter = q & Q(name=name)
             filtered_metrics = metrics.filter(temp_filter).order_by('date')\
                 .values('date', 'value', 'cumulative')
-            filtered_metrics = list(filtered_metrics)
 
-            metric_count = len(filtered_metrics)
+            metric_count = filtered_metrics.count()
 
             if summarize and metric_count > summarize:
                 factor = ceil(metric_count / summarize)
 
-                filtered_metrics = [{
-                    'date': filtered_metrics[i]['date'],
-                    'value': str(mean([float(f['value'])
-                                 for f in filtered_metrics[i:i + factor]])),
-                    'cumulative':filtered_metrics[i]['cumulative']}
-                    for i in range(0, metric_count, factor)]
+                new_metrics = []
+                temp_metric = None
 
-            result[name] = filtered_metrics
+                count = 0
+
+                for metric in filtered_metrics:
+                    if not temp_metric:
+                        temp_metric = {
+                            'date': metric['date'],
+                            'value': 0.0,
+                            'cumulative': metric['cumulative']
+                        }
+                    temp_metric['value'] += float(metric['value'])
+                    count += 1
+
+                    if count % factor == 0:
+                        temp_metric['value'] = str(temp_metric['value']/factor)
+                        new_metrics.append(temp_metric)
+                        temp_metric = None
+
+                filtered_metrics = new_metrics
+
+            result[name] = list(filtered_metrics)
 
         return result
 
@@ -80,21 +95,35 @@ class KubeMetricsView(ViewSet):
             temp_filter = q & Q(name=name)
             filtered_metrics = metrics.filter(temp_filter).order_by('date')\
                 .values('date', 'value', 'cumulative')
-            filtered_metrics = list(filtered_metrics)
 
-            metric_count = len(filtered_metrics)
+            metric_count = filtered_metrics.count()
 
             if summarize and metric_count > summarize:
                 factor = ceil(metric_count / summarize)
 
-                filtered_metrics = [{
-                    'date': filtered_metrics[i]['date'],
-                    'value': str(mean([float(f['value'])
-                                 for f in filtered_metrics[i:i + factor]])),
-                    'cumulative':filtered_metrics[i]['cumulative']}
-                    for i in range(0, metric_count, factor)]
+                new_metrics = []
+                temp_metric = None
 
-            data = json.dumps(filtered_metrics, indent=4,
+                count = 0
+
+                for metric in filtered_metrics:
+                    if not temp_metric:
+                        temp_metric = {
+                            'date': metric['date'],
+                            'value': 0.0,
+                            'cumulative': metric['cumulative']
+                        }
+                    temp_metric['value'] += float(metric['value'])
+                    count += 1
+
+                    if count % factor == 0:
+                        temp_metric['value'] = str(temp_metric['value']/factor)
+                        new_metrics.append(temp_metric)
+                        temp_metric = None
+
+                filtered_metrics = new_metrics
+
+            data = json.dumps(list(filtered_metrics), indent=4,
                               cls=DjangoJSONEncoder)
 
             with io.StringIO() as metrics_file:
@@ -388,7 +417,6 @@ class ModelRunView(ViewSet):
             name=d['name'],
             num_workers=d['num_workers'],
             cpu_limit=cpu,
-            # network_bandwidth_limit=d['max_bandwidth'],
             image=image,
             command=command,
             run_on_all_nodes=run_all

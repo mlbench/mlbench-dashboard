@@ -20,7 +20,7 @@ Runs Page
 
    Dashboard Runs Page
 
-The Runs page allows you to start a new experiment on the worker nodes. You can select how many workers to use, how many CPU Cores each worker can utilize and limit the network bandwidth available to workers.
+The Runs page allows you to start a new experiment on the worker nodes. You can select how many workers to use and how many CPU Cores each worker can utilize.
 
 
 Run Details Page

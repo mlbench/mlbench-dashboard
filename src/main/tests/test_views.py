@@ -11,7 +11,6 @@ class TestViews(TestCase):
     def test_call_test_loads(self):
         with patch.dict('os.environ', {
                 'MLBENCH_MAX_WORKERS': '1',
-                'MLBENCH_MAX_BANDWIDTH': '10000',
                 'MLBENCH_WORKER_MAX_CPU': '10000m'}):
             response = self.client.get('/runs')
             self.assertEqual(response.status_code, 200)

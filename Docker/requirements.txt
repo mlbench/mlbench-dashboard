@@ -5,7 +5,9 @@ django-constance==2.2.0
 django-picklefield==1.0.0
 djangorestframework==3.8.2
 kubernetes==6.0.0
-prometheus_client==0.3.0
+redis==2.10.6
+rq==0.12.0
+django-rq==1.2.0
 rq-scheduler==0.8.3
 psycopg2==2.7.5
 pid==2.2.0

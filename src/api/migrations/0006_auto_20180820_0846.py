@@ -17,11 +17,6 @@ class Migration(migrations.Migration):
         ),
         migrations.AddField(
             model_name='modelrun',
-            name='network_bandwidth_limit',
-            field=models.IntegerField(default=10000),
-        ),
-        migrations.AddField(
-            model_name='modelrun',
             name='num_workers',
             field=models.IntegerField(default=2),
         ),

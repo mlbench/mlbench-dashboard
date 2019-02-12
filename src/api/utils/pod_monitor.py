@@ -7,6 +7,7 @@ import os
 import json
 import urllib
 import pytz
+import logging
 from datetime import datetime
 
 
@@ -75,9 +76,13 @@ def check_pod_status():
             for pod in pods:
                 ret = v1.read_namespaced_pod(pod.name, ns)
                 phase = ret.status.phase
+                node_name = ret.spec.node_name
 
                 if phase != pod.phase:
                     pod.phase = phase
+                    pod.save()
+                if pod.node_name != node_name:
+                    pod.node_name = node_name
                     pod.save()
 
     except PidFileError:
@@ -88,10 +93,11 @@ def check_pod_status():
 def check_pod_metrics():
     """Background task to get metrics (cpu/memory etc.) of known pods
     """
-    print("running pod metrics!")
+    logger = logging.getLogger("rq.worker")
+
     from api.models.kubemetric import KubeMetric
     from api.models.kubepod import KubePod
-
+    data = None
     try:
         with PidFile('pod_metrics') as p:
             print(p.pidname)
@@ -107,15 +113,21 @@ def check_pod_metrics():
 
             for node in nodes:
                 url = 'http://{}:10255/stats/summary/'.format(node)
-                with urllib.request.urlopen(url) as response:
-                    data = json.loads(response.read().decode('utf-8'))
-                    pods += data['pods']
+                try:
+                    with urllib.request.urlopen(url) as response:
+                        data = json.loads(response.read().decode('utf-8'))
+                        pods += data['pods']
+                except Exception as e:
+                    logger.error("Couldn't get performance data: {}, {}".format(url, repr(e)))
 
             for pod in pods:
                 if pod['podRef']['name'] not in all_pods:
                     continue
 
                 current_pod = all_pods[pod['podRef']['name']]
+
+                if not pod['containers'] or len(pod['containers']) == 0:
+                    continue
 
                 cont_data = pod['containers'][0]
 
@@ -127,7 +139,8 @@ def check_pod_metrics():
                     "%Y-%m-%dT%H:%M:%SZ")
                 new_time = pytz.utc.localize(new_time)
 
-                if not newest_cpu_time or new_time > newest_cpu_time:
+                if ((not newest_cpu_time or new_time > newest_cpu_time)
+                        and 'cpu' in cont_data and 'usageNanoCores' in cont_data['cpu']):
                     metric = KubeMetric(
                         name='cpu',
                         date=cont_data['cpu']['time'],
@@ -146,7 +159,8 @@ def check_pod_metrics():
                     "%Y-%m-%dT%H:%M:%SZ")
                 new_time = pytz.utc.localize(new_time)
 
-                if not newest_memory_time or new_time > newest_memory_time:
+                if ((not newest_memory_time or new_time > newest_memory_time)
+                        and 'memory' in cont_data and 'usageBytes' in cont_data['memory']):
                     metric = KubeMetric(
                         name='memory',
                         date=cont_data['memory']['time'],
@@ -167,7 +181,8 @@ def check_pod_metrics():
                     "%Y-%m-%dT%H:%M:%SZ")
                 new_time = pytz.utc.localize(new_time)
 
-                if not newest_network_time or new_time > newest_network_time:
+                if ((not newest_network_time or new_time > newest_network_time)
+                        and 'network' in pod and 'rxBytes' in pod['network']):
                     metric = KubeMetric(
                         name='network_in',
                         date=pod['network']['time'],
