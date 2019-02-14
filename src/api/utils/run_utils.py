@@ -139,6 +139,10 @@ def run_model_job(model_run):
             hosts=','.join(hosts_with_slots),
             run_id=model_run.id,
             rank=0)
+
+        if model_run.gpu_eabled:
+            exec_command += ' --gpu'
+
         job.meta['command'] = exec_command
 
         job.meta['master_name'] = ret.items[0].metadata.name

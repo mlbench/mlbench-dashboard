@@ -404,6 +404,10 @@ class ModelRunView(ViewSet):
             entry = settings.MLBENCH_IMAGES[image]
             command = entry[1]
             run_all = entry[2]
+            gpu = False
+
+            if entry[3]:
+                gpu = d['gpu_enabled'] == 'true'
 
         if active_runs.count() > 0:
             return Response({
@@ -419,7 +423,8 @@ class ModelRunView(ViewSet):
             cpu_limit=cpu,
             image=image,
             command=command,
-            run_on_all_nodes=run_all
+            run_on_all_nodes=run_all,
+            gpu_enabled=gpu
         )
 
         run.start()
