@@ -394,6 +394,8 @@ class ModelRunView(ViewSet):
 
         image = d['image_name']
 
+        gpu = False
+
         if image == "custom_image":
             image = d['custom_image_name']
             command = d['custom_image_command']
@@ -404,7 +406,6 @@ class ModelRunView(ViewSet):
             entry = settings.MLBENCH_IMAGES[image]
             command = entry[1]
             run_all = entry[2]
-            gpu = False
 
             if entry[3]:
                 gpu = d['gpu_enabled'] == 'true'
