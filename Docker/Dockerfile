@@ -1,4 +1,4 @@
-FROM python:3.6-alpine
+FROM python:3.6-alpine3.8
 
 # Install postgres
 ENV PG_MAJOR 9.6
