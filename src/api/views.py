@@ -14,6 +14,7 @@ from rq.job import Job
 from django.utils.dateparse import parse_datetime
 from django.db.models import Q
 from django.core.serializers.json import DjangoJSONEncoder
+from django.core.exceptions import ObjectDoesNotExist
 from django.conf import settings
 
 from itertools import groupby
@@ -92,6 +93,9 @@ class KubeMetricsView(ViewSet):
 
         for name in names:
             name = name['name']
+            if 'TaskResult' in name:
+                continue
+
             temp_filter = q & Q(name=name)
             filtered_metrics = metrics.filter(temp_filter).order_by('date')\
                 .values('date', 'value', 'cumulative')
@@ -238,6 +242,16 @@ class KubeMetricsView(ViewSet):
                     'result',
                     zf
                     )
+                try:
+                    task_result = metrics.get(name="TaskResult @ 0")
+
+                    with io.StringIO() as task_result_file:
+                        task_result_file.write(task_result.value)
+
+                        zf.writestr('official_result.txt',
+                                    task_result_file.getvalue())
+                except ObjectDoesNotExist:
+                    pass
 
                 for pod in pods:
                     pod_metrics = pod.metrics
@@ -425,7 +439,8 @@ class ModelRunView(ViewSet):
             image=image,
             command=command,
             run_on_all_nodes=run_all,
-            gpu_enabled=gpu
+            gpu_enabled=gpu,
+            light_target=d['light_target'] == 'true'
         )
 
         run.start()
