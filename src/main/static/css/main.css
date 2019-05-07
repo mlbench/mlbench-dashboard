@@ -133,10 +133,10 @@ body {
 
 }
 
-/* .flex-column .flex-grow-1.scrollbar {
+.flex-column .flex-grow-1.scrollbar {
   height:0;
 }
-
+/*
 .flex-column .tab-pane.scrollbar-primary.scrollbar.flex-grow-1 {
   height: auto;
 } */
