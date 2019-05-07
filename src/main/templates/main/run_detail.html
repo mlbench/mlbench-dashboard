@@ -2,7 +2,7 @@
 {% load static %}
 
 {% block content %}
-<div class="row d-flex flex-column h-100">
+<div class="row d-flex flex-column vh-100">
     <div class="col-12 flex-grow-1 d-flex flex-column">
         <div class="row">
             <div class="col-3">Name <button type="button" class="btn btn-outline-danger" id="delete-button"><span data-feather="x"></span></button>: </div>
@@ -69,10 +69,10 @@
                     </div>
                     <svg class="d-flex w-100" style="height:50rem;" id="metric-svg"></svg>
                 </div>
-                <div class="tab-pane fade scrollbar scrollbar-primary flex-grow-1" id="stdout" role="tabpanel" aria-labelledby="stdout-tab">
+                <div class="tab-pane fade scrollbar scrollbar-primary flex-grow-1 force-overflow " id="stdout" role="tabpanel" aria-labelledby="stdout-tab">
                     <pre></pre>
                 </div>
-                <div class="tab-pane fade scrollbar scrollbar-primary flex-grow-1" id="stderr" role="tabpanel" aria-labelledby="stderr-tab">
+                <div class="tab-pane fade scrollbar scrollbar-primary flex-grow-1 force-overflow " id="stderr" role="tabpanel" aria-labelledby="stderr-tab">
                     <pre></pre>
                 </div>
             </div>
