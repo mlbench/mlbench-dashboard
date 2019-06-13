@@ -139,7 +139,16 @@ def run_model_job(model_run):
             hosts=','.join(hosts_with_slots),
             run_id=model_run.id,
             rank=0)
-        job.meta['command'] = exec_command
+
+        cmd_append = ''
+
+        if model_run.gpu_enabled:
+            cmd_append += ' --gpu'
+
+        if model_run.light_target:
+            cmd_append += ' --light'
+
+        job.meta['command'] = exec_command + cmd_append
 
         job.meta['master_name'] = ret.items[0].metadata.name
         job.save()
@@ -148,10 +157,10 @@ def run_model_job(model_run):
 
         for i, n in enumerate(ret.items):
             name = n.metadata.name
-            cmd = model_run.command.format(
+            cmd = (model_run.command.format(
                 hosts=','.join(hosts_with_slots),
                 run_id=model_run.id,
-                rank=i).split(' ')
+                rank=i) + cmd_append).split(' ')
 
             resp = stream.stream(v1.connect_get_namespaced_pod_exec, name,
                                  ns,

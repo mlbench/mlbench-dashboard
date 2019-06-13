@@ -160,7 +160,7 @@ FIXTURE_DIRS = (
    'api/fixtures/',
 )
 
-# available images. [("Name", "image", "command", send-to-all-nodes)]
+# available images. [("Name", "image", "command", send-to-all-nodes, gpu-supported)]
 MLBENCH_IMAGES = {
     'mlbench/pytorch-cifar10-resnet:latest': (
         "PyTorch Cifar-10 ResNet-20 Open-MPI",
@@ -168,26 +168,30 @@ MLBENCH_IMAGES = {
         '-x KUBERNETES_SERVICE_HOST -x KUBERNETES_SERVICE_PORT '
         '-x LD_LIBRARY_PATH=/usr/local/nvidia/lib64 --host {hosts}'
         ' /conda/bin/python /codes/main.py --run_id {run_id}',
-        False),
+        False,
+        True),
     'mlbench/pytorch-cifar10-resnet-scaling:latest': (
         "PyTorch Cifar-10 ResNet-20 Open-MPI (Scaling LR)",
         '/.openmpi/bin/mpirun --mca btl_tcp_if_exclude docker0,lo '
         '-x KUBERNETES_SERVICE_HOST -x KUBERNETES_SERVICE_PORT '
         '-x LD_LIBRARY_PATH=/usr/local/nvidia/lib64 --host {hosts}'
         ' /conda/bin/python /codes/main.py --run_id {run_id}',
-        False),
+        False,
+        True),
     'mlbench/pytorch-openmpi-epsilon-logistic-regression-all-reduce:latest': (
         "PyTorch Linear Logistic Regression Open-MPI",
         '/.openmpi/bin/mpirun --mca btl_tcp_if_exclude docker0,lo '
         '-x KUBERNETES_SERVICE_HOST -x KUBERNETES_SERVICE_PORT '
         '-x LD_LIBRARY_PATH=/usr/local/nvidia/lib64 --host {hosts}'
         ' /conda/bin/python /codes/main.py --run_id {run_id}',
-        False),
+        False,
+        True),
     'mlbench/tensorflow-cifar10-resnet:latest': (
         "Tensorflow Cifar-10 ResNet-20 Open-MPI",
         '/.openmpi/bin/mpirun --mca btl_tcp_if_exclude docker0,lo '
         '-x KUBERNETES_SERVICE_HOST -x KUBERNETES_SERVICE_PORT '
         '-x LD_LIBRARY_PATH=/usr/local/nvidia/lib64 --host {hosts} '
         '/conda/bin/python /codes/main.py --run_id {run_id} --hosts {hosts}',
+        False,
         False)
 }

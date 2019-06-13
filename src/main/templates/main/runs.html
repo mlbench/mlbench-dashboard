@@ -50,6 +50,14 @@
                     <label for="custom-image-all-nodes" class="col-form-label">Run on all nodes:</label>
                     <input type="checkbox" class="form-control" id="custom-image-all-nodes" data-toggle="tooltip" data-placement="right" title="Whether to run the command on all workers or only on the first one (e.g. for openmpi)">
                 </div>
+                <div class="form-group" id="enable-gpu">
+                    <label for="gpu-enabled" class="col-form-label">GPU:</label><br>
+                    <input type="checkbox" class="form-control" id="gpu-enabled" data-toggle="tooltip" data-placement="right" title="Whether to train on GPU or not">
+                </div>
+                <div class="form-group" id="target-type">
+                    <label for="light-target" class="col-form-label">Light Target Goal:</label><br>
+                    <input type="checkbox" class="form-control" id="light-target" data-toggle="tooltip" data-placement="right" title="Wether to run with full or light target metric goal">
+                </div>
                 <div class="form-group">
                     <label for="num-workers" class="col-form-label">Number of Workers:</label><br>
                     <input id="num-workers" class="form-control" data-slider-id='ex1Slider' type="text" data-slider-min="1" data-slider-max="{{max_workers}}" data-slider-step="1" data-slider-value="{{max_workers}}"
@@ -81,6 +89,13 @@
 {% block scripts %}
 <script type="text/javascript">
     $(document).ready(function () {
+        var image_settings = {
+            {% for image, details in images.items%}
+                "{{image}}": {
+                    "gpu": {{details.3|yesno:"true,false" }}
+                },
+            {% endfor %}
+        };
         $('[data-toggle="tooltip"]').tooltip({html:true})
 
         $('#add-run-modal').on('show.bs.modal', function (e) {
@@ -92,7 +107,9 @@
         $('.collapse').collapse();
 
         $("#image-name").change(function(){
-            if($("#image-name").val() == "custom_image"){
+            var image_name = $("#image-name").val();
+
+            if(image_name == "custom_image"){
                 $("#custom-image-collapse").collapse("show");
                 $("#custom-image-name").prop('required',true);
                 $("#custom-image-command").prop('required',true);
@@ -100,6 +117,12 @@
                 $("#custom-image-collapse").collapse("hide");
                 $("#custom-image-name").prop('required',false);
                 $("#custom-image-command").prop('required',false);
+
+                if(image_settings[image_name]["gpu"]){
+                    $("#enable-gpu").show();
+                }else{
+                    $("#enable-gpu").hide();
+                }
             }
         });
 
@@ -142,7 +165,9 @@
                     image_name: $('#image-name').val(),
                     custom_image_name: $('#custom-image-name').val(),
                     custom_image_command: $("#custom-image-command").val(),
-                    custom_image_all_nodes: $("#custom-image-all-nodes").is(':checked')
+                    custom_image_all_nodes: $("#custom-image-all-nodes").is(':checked'),
+                    gpu_enabled: $("#gpu-enabled").is(':checked'),
+                    light_target: $("#light-target").is(':checked'),
                 },
                 function( data ) {
                     location.reload();

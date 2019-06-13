@@ -32,6 +32,8 @@ class ModelRun(models.Model):
     image = models.CharField(max_length=100, default="mlbench/mlbench_worker")
     command = models.CharField(max_length=1000, default="")
     run_on_all_nodes = models.BooleanField(default=False)
+    gpu_enabled = models.BooleanField(default=False)
+    light_target = models.BooleanField(default=False)
 
     job_metadata = {}
 
