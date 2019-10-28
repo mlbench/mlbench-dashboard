@@ -83,8 +83,10 @@ class KubeMetricsView(ViewSet):
                         temp_metric = None
 
                 filtered_metrics = new_metrics
+            result_metrics = list(filtered_metrics)
 
-            result[name] = list(filtered_metrics)
+            if len(result_metrics) > 0:
+                result[name] = result_metrics
 
         return result
 
@@ -126,6 +128,10 @@ class KubeMetricsView(ViewSet):
                         temp_metric = None
 
                 filtered_metrics = new_metrics
+            result_metrics = list(filtered_metrics)
+
+            if len(result_metrics) == 0:
+                continue
 
             data = json.dumps(list(filtered_metrics), indent=4,
                               cls=DjangoJSONEncoder)
@@ -199,6 +205,11 @@ class KubeMetricsView(ViewSet):
 
         if summarize is not None:
             summarize = int(summarize)
+
+        metric_filter = self.request.query_params.get('metric_filter', None)
+
+        if metric_filter:
+            q &= Q(name=metric_filter)
 
         metric_type = self.request.query_params.get('metric_type', 'pod')
 
