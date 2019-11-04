@@ -45,7 +45,7 @@ class KubeMetricsView(ViewSet):
     """Handles the /api/metrics endpoint
     """
 
-    def __format_result(self, metrics, q, summarize):
+    def __format_result(self, metrics, q, summarize, last_n):
         # get available kind of metrics
         names = metrics.values('name').distinct()
 
@@ -83,12 +83,17 @@ class KubeMetricsView(ViewSet):
                         temp_metric = None
 
                 filtered_metrics = new_metrics
+            result_metrics = list(filtered_metrics)
 
-            result[name] = list(filtered_metrics)
+            if last_n:
+                result_metrics = result_metrics[-last_n:]
+
+            if len(result_metrics) > 0:
+                result[name] = result_metrics
 
         return result
 
-    def __format_zip_result(self, metrics, q, summarize, prefix, zf):
+    def __format_zip_result(self, metrics, q, summarize, last_n, prefix, zf):
         names = metrics.values('name').distinct()
 
         for name in names:
@@ -126,6 +131,13 @@ class KubeMetricsView(ViewSet):
                         temp_metric = None
 
                 filtered_metrics = new_metrics
+            result_metrics = list(filtered_metrics)
+
+            if last_n:
+                result_metrics = result_metrics[-last_n:]
+
+            if len(result_metrics) == 0:
+                continue
 
             data = json.dumps(list(filtered_metrics), indent=4,
                               cls=DjangoJSONEncoder)
@@ -200,6 +212,16 @@ class KubeMetricsView(ViewSet):
         if summarize is not None:
             summarize = int(summarize)
 
+        metric_filter = self.request.query_params.get('metric_filter', None)
+
+        if metric_filter:
+            q &= Q(name=metric_filter)
+
+        last_n = self.request.query_params.get('last_n', None)
+
+        if last_n:
+            last_n = int(last_n)
+
         metric_type = self.request.query_params.get('metric_type', 'pod')
 
         if metric_type == 'pod':
@@ -211,7 +233,7 @@ class KubeMetricsView(ViewSet):
 
         if request.accepted_renderer.format != 'zip':
             # generate json
-            result = self.__format_result(metrics, q, summarize)
+            result = self.__format_result(metrics, q, summarize, last_n)
 
             return Response(result, status=status.HTTP_200_OK)
 
@@ -239,6 +261,7 @@ class KubeMetricsView(ViewSet):
                     metrics,
                     q,
                     summarize,
+                    last_n,
                     'result',
                     zf
                     )
