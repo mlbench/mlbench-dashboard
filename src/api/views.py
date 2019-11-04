@@ -219,6 +219,9 @@ class KubeMetricsView(ViewSet):
 
         last_n = self.request.query_params.get('last_n', None)
 
+        if last_n:
+            last_n = int(last_n)
+
         metric_type = self.request.query_params.get('metric_type', 'pod')
 
         if metric_type == 'pod':
