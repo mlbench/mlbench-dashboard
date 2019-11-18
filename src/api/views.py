@@ -24,8 +24,6 @@ import zipfile
 import io
 import json
 from math import ceil
-from statistics import mean
-from itertools import islice, takewhile, repeat
 
 
 class KubePodView(ViewSet):
@@ -427,8 +425,6 @@ class ModelRunView(ViewSet):
         # TODO: lock table, otherwise there might be concurrency conflicts
         d = request.data
 
-        active_runs = ModelRun.objects.filter(state=ModelRun.STARTED)
-
         image = d['image_name']
 
         gpu = False
@@ -446,12 +442,6 @@ class ModelRunView(ViewSet):
 
             if entry[3]:
                 gpu = d['gpu_enabled'] == 'true'
-
-        if active_runs.count() > 0:
-            return Response({
-                'status': 'Conflict',
-                'message': 'There is already an active run'
-            }, status=status.HTTP_409_CONFLICT)
 
         cpu = "{}m".format(float(d['num_cpus']) * 1000)
 

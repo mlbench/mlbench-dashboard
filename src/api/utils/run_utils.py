@@ -5,48 +5,30 @@ from rq import get_current_job
 
 import os
 from time import sleep
-import socket
-import time
 
 
-def limit_resources(model_run, name, namespace, job):
+def create_statefulset(model_run, name, namespace, job):
     kube_api = client.AppsV1beta1Api()
-    v1Api = client.CoreV1Api()
 
-    release_name = os.environ.get('MLBENCH_KUBE_RELEASENAME')
+    statefulset_name = "{0}-mlbench-worker-{1}".format(name, model_run.name)
 
-    name = "{}-mlbench-worker".format(name)
+    template_name = "{}-mlbench-worker".format(name)
 
-    body = [
-        {
-            'op': 'replace',
-            'path': '/spec/replicas',
-            'value': int(model_run.num_workers)
-        },
-        {
-            'op': 'replace',
-            'path': '/spec/template/spec/containers/0/resources/limits/cpu',
-            'value': model_run.cpu_limit
-        },
-        {
-            'op': 'replace',
-            'path': '/spec/template/spec/containers/0/image',
-            'value': model_run.image
-        },
-        {
-            # force redeploy even if nothing changes
-            'op': 'replace',
-            'path': '/spec/template/metadata/labels/date',
-            'value': str(time.time())
-        }
-    ]
+    statefulset = kube_api.read_namespaced_stateful_set(
+        template_name, namespace)
 
-    kube_api.patch_namespaced_stateful_set(name, namespace, body)
+    statefulset.metadata.name = statefulset_name
+    statefulset.spec.replicas = int(model_run.num_workers)
+    statefulset.spec.template.spec.containers[0].resources.limits.cpu = \
+        model_run.cpu_limit
+    statefulset.spec.template.spec.containers[0].image = model_run.image
 
-    # wait for StatefulSet to upgrade
+    kube_api.create_namespaced_stateful_set(namespace, statefulset)
+
+    # wait for StatefulSet to be created
     while True:
-        response = kube_api.read_namespaced_stateful_set_status(name,
-                                                                namespace)
+        response = kube_api.read_namespaced_stateful_set_status(
+            statefulset_name, namespace)
         s = response.status
         if (s.current_replicas == response.spec.replicas and
                 s.replicas == response.spec.replicas and
@@ -68,6 +50,42 @@ def limit_resources(model_run, name, namespace, job):
         sleep(1)
 
 
+def delete_statefulset(model_run, name, namespace):
+    kube_api = client.AppsV1beta1Api()
+
+    statefulset_name = "{0}-mlbench-worker-{1}".format(name, model_run.name)
+
+    kube_api.delete_namespaced_stateful_set(statefulset_name, namespace)
+
+
+def check_nodes_available_for_execution(model_run):
+    from api.models import ModelRun
+
+    max_workers = os.environ.get('MLBENCH_MAX_WORKERS')
+    active_runs = ModelRun.objects.filter(state=ModelRun.STARTED)
+
+    utilized_workers = sum(r.num_workers for r in active_runs)
+
+    if utilized_workers == max_workers:
+        return False
+
+    available_workers = max_workers - utilized_workers
+
+    pending_runs = ModelRun.objects.filter(
+        state=ModelRun.INITIALIZED).order_by('num_workers')
+
+    for r in pending_runs:
+        if r.num_workers > available_workers:
+            return False
+
+        if r.id == model_run.id:
+            return True
+
+        available_workers -= r.num_workers
+
+    return False  # this should never be reached!
+
+
 @django_rq.job('default', result_ttl=-1, timeout=-1, ttl=-1)
 def run_model_job(model_run):
     """RQ Job to execute OpenMPI
@@ -80,6 +98,8 @@ def run_model_job(model_run):
     from api.models import ModelRun, KubePod
 
     try:
+        while not check_nodes_available_for_execution(model_run):
+            sleep(30)
         job = get_current_job()
 
         job.meta['stdout'] = []
@@ -96,7 +116,7 @@ def run_model_job(model_run):
         release_name = os.environ.get('MLBENCH_KUBE_RELEASENAME')
         ns = os.environ.get('MLBENCH_NAMESPACE')
 
-        limit_resources(model_run, release_name, ns, job)
+        create_statefulset(model_run, release_name, ns, job)
 
         # start run
         ret = v1.list_namespaced_pod(
@@ -197,3 +217,5 @@ def run_model_job(model_run):
         job.meta['stderr'].append(str(e))
         job.save()
         model_run.save()
+    finally:
+        delete_statefulset(model_run, release_name, ns)
