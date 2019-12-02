@@ -141,7 +141,7 @@ def create_statefulset(model_run, name, namespace, job):
     core = client.CoreV1Api()
     kube_api = client.AppsV1beta2Api()
 
-    statefulset_name = "{1}-mlbench-worker-{0}".format(name, model_run.name)
+    statefulset_name = "{1}-mlbench-worker-{0}".format(name, model_run.name).lower()
 
     # create service
     service = deepcopy(service_template)
@@ -161,11 +161,15 @@ def create_statefulset(model_run, name, namespace, job):
     statefulset.spec.selector.match_labels['set'] = model_run.name
     statefulset.spec.service_name = statefulset_name
     statefulset.spec.replicas = int(model_run.num_workers)
-    statefulset.spec.template.spec.containers[0].resources.limits['cpu'] =\
-        model_run.cpu_limit
-    statefulset.spec.template.spec.containers[0].image = model_run.image
-    statefulset.spec.template.spec.containers[0].name = "{}-worker".format(
-        model_run.name)
+    container = statefulset.spec.template.spec.containers[0]
+    container.resources.limits['cpu'] = model_run.cpu_limit
+
+    if model_run.gpu_enabled:
+        container.resources.limits['nvidia.com/gpu'] = "1"
+
+    container.image = model_run.image
+    container.name = "{}-worker".format(
+        model_run.name).lower()
     statefulset.spec.template.spec.service_account_name =\
         '{}-mlbench-worker-sa'.format(os.environ.get('MLBENCH_KUBE_RELEASENAME'))
     statefulset.spec.template.metadata.labels['set'] = model_run.name
@@ -209,6 +213,16 @@ def create_statefulset(model_run, name, namespace, job):
 
 def delete_statefulset(statefulset_name, namespace):
     kube_api = client.AppsV1beta1Api()
+
+    # scale down before delete
+    kube_api.patch_namespaced_stateful_set(
+        statefulset_name, namespace, [
+        {
+            'op': 'replace',
+            'path': '/spec/replicas',
+            'value': 0
+        }]
+    )
 
     kube_api.delete_namespaced_stateful_set(statefulset_name, namespace,
                                             body=client.V1DeleteOptions())
@@ -418,7 +432,7 @@ def run_model_job(model_run):
         job.meta['stderr'].append(traceback.format_exc())
         job.save()
         model_run.save()
-    # finally:
-    #     if set_name:
-    #         delete_statefulset(set_name, ns)
-    #         delete_service(set_name, ns)
+    finally:
+        if set_name:
+            delete_statefulset(set_name, ns)
+            delete_service(set_name, ns)

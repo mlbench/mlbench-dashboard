@@ -4,7 +4,7 @@
       "pk": 1,
       "fields": {
         "name": "CheckNewPods",
-        "queue": "default",
+        "queue": "high",
         "callable": "api.utils.pod_monitor.check_new_pods",
         "enabled": true,
         "interval": 30,
@@ -18,7 +18,7 @@
         "pk": 2,
         "fields": {
           "name": "CheckPodStatus",
-          "queue": "default",
+          "queue": "high",
           "callable": "api.utils.pod_monitor.check_pod_status",
           "enabled": true,
           "interval": 5,
@@ -32,7 +32,7 @@
         "pk": 3,
         "fields": {
           "name": "CheckPodMetrics",
-          "queue": "default",
+          "queue": "high",
           "callable": "api.utils.pod_monitor.check_pod_metrics",
           "enabled": true,
           "interval": 5,
