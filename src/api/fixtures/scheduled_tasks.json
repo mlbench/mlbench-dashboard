@@ -9,7 +9,7 @@
         "enabled": true,
         "interval": 30,
         "interval_unit": "seconds",
-        "scheduled_time": "2018-01-01T00:00:00.000+00:00",
+        "scheduled_time": "2019-01-01T00:00:00.000+00:00",
         "result_ttl": 120
       }
     },
@@ -23,7 +23,7 @@
           "enabled": true,
           "interval": 5,
           "interval_unit": "seconds",
-          "scheduled_time": "2018-01-01T00:00:20.000+00:00",
+          "scheduled_time": "2019-01-01T00:00:20.000+00:00",
           "result_ttl": 120
         }
     },
@@ -37,7 +37,7 @@
           "enabled": true,
           "interval": 5,
           "interval_unit": "seconds",
-          "scheduled_time": "2018-01-01T00:00:40.000+00:00",
+          "scheduled_time": "2019-01-01T00:00:40.000+00:00",
           "result_ttl": 120
         }
     }

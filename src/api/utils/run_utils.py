@@ -32,8 +32,7 @@ service_template = client.V1Service(
         ports=[
             client.V1ServicePort(
                 name="dummy",
-                port=1234,
-                target_port=1234)]))
+                port=22)]))
 
 
 statefulset_template = client.V1beta2StatefulSet(
@@ -71,7 +70,7 @@ statefulset_template = client.V1beta2StatefulSet(
                     "heritage": "Helm",
                     "set": ""}),
             spec=client.V1PodSpec(
-                service_account_name="",
+                service_account_name="mlbench-worker-sa",
                 affinity=client.V1Affinity(
                     pod_anti_affinity=client.V1PodAntiAffinity(
                         required_during_scheduling_ignored_during_execution=[
@@ -160,13 +159,15 @@ def create_statefulset(model_run, name, namespace, job):
     statefulset.metadata.labels['set'] = model_run.name
 
     statefulset.spec.selector.match_labels['set'] = model_run.name
-    statefulset.spec.service_name = "mlbench-worker-{}".format(model_run.name)
+    statefulset.spec.service_name = statefulset_name
     statefulset.spec.replicas = int(model_run.num_workers)
     statefulset.spec.template.spec.containers[0].resources.limits['cpu'] =\
         model_run.cpu_limit
     statefulset.spec.template.spec.containers[0].image = model_run.image
     statefulset.spec.template.spec.containers[0].name = "{}-worker".format(
         model_run.name)
+    statefulset.spec.template.spec.service_account_name =\
+        '{}-mlbench-worker-sa'.format(os.environ.get('MLBENCH_KUBE_RELEASENAME'))
     statefulset.spec.template.metadata.labels['set'] = model_run.name
 
     response = kube_api.create_namespaced_stateful_set(namespace,
@@ -252,7 +253,7 @@ def check_nodes_available_for_execution(model_run, job):
     return False  # this should never be reached!
 
 
-@django_rq.job('default', result_ttl=-1, timeout=-1, ttl=-1)
+@django_rq.job('default', result_ttl=-1, timeout=-1, ttl=None)
 def run_model_job(model_run):
     """RQ Job to execute OpenMPI
 
@@ -321,7 +322,7 @@ def run_model_job(model_run):
                 try:
                     db_pod = KubePod.objects.get(name=i.metadata.name)
                     db_pods.append(db_pod)
-                    hosts.append("{}.{}".format(i.metadata.name, release_name))
+                    hosts.append("{}.{}".format(i.metadata.name, set_name))
                 except KubePod.DoesNotExist:
                     sleep(10)
                     retries += 1
@@ -337,6 +338,7 @@ def run_model_job(model_run):
         model_run.save()
 
         job.meta['pods'] = pods
+        job.meta['stdout'].append(str(hosts))
         job.save()
 
         # Write hostfile
@@ -416,7 +418,7 @@ def run_model_job(model_run):
         job.meta['stderr'].append(traceback.format_exc())
         job.save()
         model_run.save()
-    finally:
-        if set_name:
-            delete_statefulset(set_name, ns)
-            delete_service(set_name, ns)
+    # finally:
+    #     if set_name:
+    #         delete_statefulset(set_name, ns)
+    #         delete_service(set_name, ns)
