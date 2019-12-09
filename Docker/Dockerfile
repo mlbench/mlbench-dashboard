@@ -59,7 +59,7 @@ RUN set -ex \
             nginx \
             sqlite \
             supervisor \
-            redis=4.0.11-r0 \
+            redis=4.0.14-r0 \
             postgresql \
     && mkdir /data \
     && chown -R redis:redis /data\

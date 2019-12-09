@@ -34,6 +34,9 @@ def check_new_pods():
 
             all_pods = list(KubePod.objects.all().values_list('name'))
 
+            if len(ret.items) == 0:
+                return
+
             for i in ret.items:
                 if KubePod.objects.filter(name=i.metadata.name).count() == 0:
                     ip = i.status.pod_ip
