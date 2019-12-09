@@ -280,12 +280,14 @@ class KubeMetricsView(ViewSet):
                         pod_metrics,
                         q,
                         summarize,
+                        last_n,
                         pod.name,
                         zf
                         )
 
             else:
-                zf = self.__format_zip_result(metrics, q, 'result', zf)
+                zf = self.__format_zip_result(metrics, q, summarize, last_n,
+                                              'result', zf)
                 pod = KubePod.objects.filter(name=pk).first()
                 filename = secure_filename(pod.name)
 

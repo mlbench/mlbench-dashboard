@@ -7,6 +7,7 @@ import os
 from copy import deepcopy
 from time import sleep
 import traceback
+import websocket
 
 MAX_POD_RETRIES = 20
 
@@ -410,19 +411,28 @@ def run_model_job(model_run):
         job.save()
 
         # keep writing openmpi output to job metadata
-        while any(s.is_open() for s in streams):
+        cont = True
+        while any(s.is_open() for s in streams) and cont:
             for s in streams:
-                if not s.is_open():
-                    continue
-                s.update(timeout=None)
-                if s.peek_stdout():
-                    out = s.read_stdout()
-                    job.meta['stdout'] += out.splitlines()
-                if s.peek_stderr():
-                    err = s.read_stderr()
-                    job.meta['stderr'] += err.splitlines()
+                try:
+                    if not s.is_open():
+                        cont = False
+                        continue
+                    s.update(timeout=5)
+                    if s.peek_stdout():
+                        out = s.read_stdout()
+                        if 'Goal Reached!' in out:
+                            cont = False
 
-            job.save()
+                        job.meta['stdout'] += out.splitlines()
+                    if s.peek_stderr():
+                        err = s.read_stderr()
+                        job.meta['stderr'] += err.splitlines()
+
+                    job.save()
+                except websocket.WebSocketConnectionClosedException:
+                    cont = False
+                    continue
 
         model_run.state = ModelRun.FINISHED
         model_run.save()
