@@ -5,6 +5,7 @@ from api.serializers import (
     KubeMetricsSerializer
     )
 from api.utils.utils import secure_filename
+from api.utils.run_utils import delete_statefulset, delete_service
 
 from rest_framework.viewsets import ViewSet
 from rest_framework.response import Response
@@ -477,8 +478,18 @@ class ModelRunView(ViewSet):
         """
         run = ModelRun.objects.get(pk=pk)
 
+        release_name = os.environ.get('MLBENCH_KUBE_RELEASENAME')
+        ns = os.environ.get('MLBENCH_NAMESPACE')
+        statefulset_name = "{1}-mlbench-worker-{0}".format(release_name, run.name).lower()
+
         if run is not None:
             run.delete()
+
+            try:
+                delete_statefulset(statefulset_name, ns)
+                delete_service(statefulset_name, ns)
+            except (BaseException, Exception):
+                pass
 
         return Response({
             'status': 'Deleted',
