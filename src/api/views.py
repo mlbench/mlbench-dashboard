@@ -436,6 +436,7 @@ class ModelRunView(ViewSet):
             image = d['custom_image_name']
             command = d['custom_image_command']
             run_all = d['custom_image_all_nodes']
+            gpu = d['gpu_enabled'] == 'true'
             if isinstance(run_all, str):
                 run_all = run_all == 'true'
         else:
