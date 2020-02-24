@@ -1,7 +1,7 @@
 mlbench: Distributed Machine Learning Benchmark Helm Chart
 ==========================================================
 
-[![Build Status](https://travis-ci.com/mlbench/mlbench-dashboard.svg?branch=develop)](https://travis-ci.com/mlbench/mlbench-helm)
+[![Build Status](https://travis-ci.com/mlbench/mlbench-dashboard.svg?branch=develop)](https://travis-ci.com/mlbench/mlbench-dashboard)
 [![DocumentationStatus](https://readthedocs.org/projects/mlbench-docs/badge/?version=latest)](https://mlbench.readthedocs.io/projects/mlbench_dashboard/en/latest/readme.html?badge=latest)
 
 MLBench is a Benchmarking Framework for Distributed Machine Learning algorithms.
