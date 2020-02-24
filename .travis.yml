@@ -7,7 +7,7 @@ jobs:
     - stage: test
       language: python
       python:
-        - "3.4"
+        # - "3.4" Build fails on Version 3.4 because PyYAML requires version >= 3.5
         - "3.5"
         - "3.6"
 
