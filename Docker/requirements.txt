@@ -1,4 +1,4 @@
-Django==2.0.8
+Django==2.2.10
 uwsgi==2.0.17
 django-livesync==0.4
 django-constance==2.2.0
