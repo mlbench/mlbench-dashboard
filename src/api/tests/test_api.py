@@ -52,7 +52,7 @@ class ModelRunTests(APITestCase):
                     "custom_image_command": "sleep",
                     "custom_image_all_nodes": True,
                     "light_target": True,
-                    "gpu_enabled": False,
+                    "gpu_enabled": "false",
                 },
                 format="json",
             )
