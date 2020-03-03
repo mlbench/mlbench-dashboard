@@ -6,23 +6,21 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('api', '0008_modelrun_finished_at'),
+        ("api", "0008_modelrun_finished_at"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='kubepod',
-            name='labels',
+            model_name="kubepod",
+            name="labels",
             field=models.CharField(max_length=1000),
         ),
         migrations.AlterField(
-            model_name='kubepod',
-            name='name',
-            field=models.CharField(max_length=1000),
+            model_name="kubepod", name="name", field=models.CharField(max_length=1000),
         ),
         migrations.AlterField(
-            model_name='kubepod',
-            name='node_name',
+            model_name="kubepod",
+            name="node_name",
             field=models.CharField(max_length=1000),
         ),
     ]

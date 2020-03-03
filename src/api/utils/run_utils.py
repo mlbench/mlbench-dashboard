@@ -20,20 +20,21 @@ service_template = client.V1Service(
             "app": "mlbench",
             "chart": "mlbench-2.0.0",
             "component": "worker",
-            "release": os.environ.get('MLBENCH_KUBE_RELEASENAME'),
+            "release": os.environ.get("MLBENCH_KUBE_RELEASENAME"),
             "heritage": "Helm",
-            "set": ""}),
+            "set": "",
+        },
+    ),
     spec=client.V1ServiceSpec(
         selector={
             "app": "mlbench",
-            "release": os.environ.get('MLBENCH_KUBE_RELEASENAME'),
-            "set": ""
+            "release": os.environ.get("MLBENCH_KUBE_RELEASENAME"),
+            "set": "",
         },
         cluster_ip="None",
-        ports=[
-            client.V1ServicePort(
-                name="dummy",
-                port=22)]))
+        ports=[client.V1ServicePort(name="dummy", port=22)],
+    ),
+)
 
 
 statefulset_template = client.V1beta2StatefulSet(
@@ -45,31 +46,34 @@ statefulset_template = client.V1beta2StatefulSet(
             "app": "mlbench",
             "chart": "mlbench-2.0.0",
             "component": "worker",
-            "release": os.environ.get('MLBENCH_KUBE_RELEASENAME'),
+            "release": os.environ.get("MLBENCH_KUBE_RELEASENAME"),
             "heritage": "Helm",
-            "set": ""}),
+            "set": "",
+        },
+    ),
     spec=client.V1beta2StatefulSetSpec(
         replicas=0,
         selector=client.V1LabelSelector(
             match_labels={
                 "app": "mlbench",
-                "release": os.environ.get('MLBENCH_KUBE_RELEASENAME'),
-                "set": ""
+                "release": os.environ.get("MLBENCH_KUBE_RELEASENAME"),
+                "set": "",
             }
         ),
         service_name="",
         pod_management_policy="Parallel",
-        update_strategy=client.V1beta2StatefulSetUpdateStrategy(
-            type="RollingUpdate"),
+        update_strategy=client.V1beta2StatefulSetUpdateStrategy(type="RollingUpdate"),
         template=client.V1PodTemplateSpec(
             metadata=client.V1ObjectMeta(
                 labels={
                     "app": "mlbench",
                     "chart": "mlbench-2.0.0",
                     "component": "worker",
-                    "release": os.environ.get('MLBENCH_KUBE_RELEASENAME'),
+                    "release": os.environ.get("MLBENCH_KUBE_RELEASENAME"),
                     "heritage": "Helm",
-                    "set": ""}),
+                    "set": "",
+                }
+            ),
             spec=client.V1PodSpec(
                 service_account_name="mlbench-worker-sa",
                 affinity=client.V1Affinity(
@@ -81,11 +85,11 @@ statefulset_template = client.V1beta2StatefulSet(
                                         client.V1LabelSelectorRequirement(
                                             key="component",
                                             operator="In",
-                                            values=["worker"]
+                                            values=["worker"],
                                         )
                                     ]
                                 ),
-                                topology_key="kubernetes.io/hostname"
+                                topology_key="kubernetes.io/hostname",
                             )
                         ]
                     )
@@ -102,24 +106,18 @@ statefulset_template = client.V1beta2StatefulSet(
                                 name="ssh",
                                 container_port=22,
                                 host_port=16166,
-                                protocol="TCP"
+                                protocol="TCP",
                             )
                         ],
                         resources=client.V1ResourceRequirements(
-                            limits={
-                                "cpu": "1",
-                                "nvidia.com/gpu": "0"
-                            }
+                            limits={"cpu": "1", "nvidia.com/gpu": "0"}
                         ),
                         volume_mounts=[
                             client.V1VolumeMount(
-                                name="mlbench-ssh-key",
-                                mount_path="/ssh-key/root"
+                                name="mlbench-ssh-key", mount_path="/ssh-key/root"
                             )
                         ],
-                        security_context=client.V1SecurityContext(
-                            privileged=True
-                        )
+                        security_context=client.V1SecurityContext(privileged=True),
                     )
                 ],
                 volumes=[
@@ -127,14 +125,15 @@ statefulset_template = client.V1beta2StatefulSet(
                         name="mlbench-ssh-key",
                         secret=client.V1SecretVolumeSource(
                             secret_name="{}-ssh-key".format(
-                                os.environ.get('MLBENCH_KUBE_RELEASENAME')),
-                            default_mode=256
-                        )
+                                os.environ.get("MLBENCH_KUBE_RELEASENAME")
+                            ),
+                            default_mode=256,
+                        ),
                     )
-                ]
-            )
-        )
-    )
+                ],
+            ),
+        ),
+    ),
 )
 
 
@@ -148,8 +147,8 @@ def create_statefulset(model_run, name, namespace, job):
     service = deepcopy(service_template)
 
     service.metadata.name = statefulset_name
-    service.metadata.labels['set'] = model_run.name
-    service.spec.selector['set'] = model_run.name
+    service.metadata.labels["set"] = model_run.name
+    service.spec.selector["set"] = model_run.name
 
     response = core.create_namespaced_service(namespace, service)
 
@@ -157,37 +156,37 @@ def create_statefulset(model_run, name, namespace, job):
     statefulset = deepcopy(statefulset_template)
 
     statefulset.metadata.name = statefulset_name
-    statefulset.metadata.labels['set'] = model_run.name
+    statefulset.metadata.labels["set"] = model_run.name
 
-    statefulset.spec.selector.match_labels['set'] = model_run.name
+    statefulset.spec.selector.match_labels["set"] = model_run.name
     statefulset.spec.service_name = statefulset_name
     statefulset.spec.replicas = int(model_run.num_workers)
     container = statefulset.spec.template.spec.containers[0]
-    container.resources.limits['cpu'] = model_run.cpu_limit
+    container.resources.limits["cpu"] = model_run.cpu_limit
 
     if model_run.gpu_enabled:
-        container.resources.limits['nvidia.com/gpu'] = "1"
+        container.resources.limits["nvidia.com/gpu"] = "1"
 
     container.image = model_run.image
-    container.name = "{}-worker".format(
-        model_run.name).lower()
-    statefulset.spec.template.spec.service_account_name =\
-        '{}-mlbench-worker-sa'.format(os.environ.get('MLBENCH_KUBE_RELEASENAME'))
-    statefulset.spec.template.metadata.labels['set'] = model_run.name
+    container.name = "{}-worker".format(model_run.name).lower()
+    statefulset.spec.template.spec.service_account_name = "{}-mlbench-worker-sa".format(
+        os.environ.get("MLBENCH_KUBE_RELEASENAME")
+    )
+    statefulset.spec.template.metadata.labels["set"] = model_run.name
 
-    response = kube_api.create_namespaced_stateful_set(namespace,
-                                                       statefulset)
+    response = kube_api.create_namespaced_stateful_set(namespace, statefulset)
 
-    job.meta['stdout'].append("Waiting for pods to become available\n")
+    job.meta["stdout"].append("Waiting for pods to become available\n")
     job.save()
 
     # wait for StatefulSet to be created
     while True:
         response = kube_api.read_namespaced_stateful_set_status(
-            statefulset_name, namespace)
+            statefulset_name, namespace
+        )
         s = response.status
 
-        job.meta['stdout'].append(
+        job.meta["stdout"].append(
             "Waiting for workers: Current: {}/{}, Replicas: {}/{}, "
             "Ready: {}, "
             "Observed Gen: {}/{}".format(
@@ -197,14 +196,17 @@ def create_statefulset(model_run, name, namespace, job):
                 response.spec.replicas,
                 s.ready_replicas,
                 s.observed_generation,
-                response.metadata.generation
-            ))
+                response.metadata.generation,
+            )
+        )
         job.save()
 
-        if (s.current_replicas == response.spec.replicas and
-                s.replicas == response.spec.replicas and
-                s.ready_replicas == response.spec.replicas and
-                s.observed_generation == response.metadata.generation):
+        if (
+            s.current_replicas == response.spec.replicas
+            and s.replicas == response.spec.replicas
+            and s.ready_replicas == response.spec.replicas
+            and s.observed_generation == response.metadata.generation
+        ):
             break
 
         sleep(1)
@@ -217,32 +219,31 @@ def delete_statefulset(statefulset_name, namespace):
 
     # scale down before delete
     kube_api.patch_namespaced_stateful_set(
-        statefulset_name, namespace, [
-        {
-            'op': 'replace',
-            'path': '/spec/replicas',
-            'value': 0
-        }]
+        statefulset_name,
+        namespace,
+        [{"op": "replace", "path": "/spec/replicas", "value": 0}],
     )
 
-    kube_api.delete_namespaced_stateful_set(statefulset_name, namespace,
-                                            body=client.V1DeleteOptions())
+    kube_api.delete_namespaced_stateful_set(
+        statefulset_name, namespace, body=client.V1DeleteOptions()
+    )
 
 
 def delete_service(statefulset_name, namespace):
     kube_api = client.CoreV1Api()
 
-    kube_api.delete_namespaced_service(statefulset_name, namespace,
-                                       body=client.V1DeleteOptions())
+    kube_api.delete_namespaced_service(
+        statefulset_name, namespace, body=client.V1DeleteOptions()
+    )
 
 
 def check_nodes_available_for_execution(model_run, job):
     from api.models import ModelRun
 
-    job.meta['stdout'].append("Waiting for nodes to be available\n")
+    job.meta["stdout"].append("Waiting for nodes to be available\n")
     job.save()
 
-    max_workers = int(os.environ.get('MLBENCH_MAX_WORKERS'))
+    max_workers = int(os.environ.get("MLBENCH_MAX_WORKERS"))
     active_runs = ModelRun.objects.filter(state=ModelRun.STARTED)
     print(list(active_runs))
 
@@ -253,8 +254,9 @@ def check_nodes_available_for_execution(model_run, job):
 
     available_workers = max_workers - utilized_workers
 
-    pending_runs = ModelRun.objects.filter(
-        state=ModelRun.INITIALIZED).order_by('num_workers')
+    pending_runs = ModelRun.objects.filter(state=ModelRun.INITIALIZED).order_by(
+        "num_workers"
+    )
     print(list(pending_runs))
     for r in pending_runs:
         if r.num_workers > available_workers:
@@ -268,7 +270,7 @@ def check_nodes_available_for_execution(model_run, job):
     return False  # this should never be reached!
 
 
-@django_rq.job('default', result_ttl=-1, timeout=-1, ttl=None)
+@django_rq.job("default", result_ttl=-1, timeout=-1, ttl=None)
 def run_model_job(model_run):
     """RQ Job to execute OpenMPI
 
@@ -279,20 +281,20 @@ def run_model_job(model_run):
 
     from api.models import ModelRun, KubePod
 
-    release_name = os.environ.get('MLBENCH_KUBE_RELEASENAME')
-    ns = os.environ.get('MLBENCH_NAMESPACE')
+    release_name = os.environ.get("MLBENCH_KUBE_RELEASENAME")
+    ns = os.environ.get("MLBENCH_NAMESPACE")
 
     job = get_current_job()
 
-    job.meta['stdout'] = []
-    job.meta['stderr'] = []
-    job.meta['stdout'].append("Initializing run")
+    job.meta["stdout"] = []
+    job.meta["stderr"] = []
+    job.meta["stdout"].append("Initializing run")
     job.save()
 
     model_run.job_id = job.id
     model_run.save()
 
-    set_name = ''
+    set_name = ""
 
     try:
         while not check_nodes_available_for_execution(model_run, job):
@@ -307,14 +309,16 @@ def run_model_job(model_run):
 
         set_name = create_statefulset(model_run, release_name, ns, job)
 
-        job.meta['stdout'].append("Created stateful set, starting run.")
+        job.meta["stdout"].append("Created stateful set, starting run.")
         job.save()
 
         # start run
         ret = v1.list_namespaced_pod(
             ns,
-            label_selector="component=worker,app=mlbench,release={0},set={1}"
-            .format(release_name, model_run.name))
+            label_selector="component=worker,app=mlbench,release={0},set={1}".format(
+                release_name, model_run.name
+            ),
+        )
 
         retries = 0
         while retries < MAX_POD_RETRIES:
@@ -322,18 +326,23 @@ def run_model_job(model_run):
                 sleep(10)
                 ret = v1.list_namespaced_pod(
                     ns,
-                    label_selector=\
-                        "component=worker,app=mlbench,release={0},set={1}"
-                    .format(release_name, model_run.name))
+                    label_selector="component=worker,app=mlbench,release={0},set={1}".format(
+                        release_name, model_run.name
+                    ),
+                )
                 continue
             pods = []
             db_pods = []
             hosts = []
             for i in ret.items:
-                pods.append((i.status.pod_ip,
-                            i.metadata.namespace,
-                            i.metadata.name,
-                            str(i.metadata.labels)))
+                pods.append(
+                    (
+                        i.status.pod_ip,
+                        i.metadata.namespace,
+                        i.metadata.name,
+                        str(i.metadata.labels),
+                    )
+                )
                 try:
                     db_pod = KubePod.objects.get(name=i.metadata.name)
                     db_pods.append(db_pod)
@@ -352,14 +361,12 @@ def run_model_job(model_run):
         model_run.pods.set(db_pods)
         model_run.save()
 
-        job.meta['pods'] = pods
-        job.meta['stdout'].append(str(hosts))
+        job.meta["pods"] = pods
+        job.meta["stdout"].append(str(hosts))
         job.save()
 
         # Write hostfile
-        max_gpu_per_worker = int(os.environ.get(
-            'MLBENCH_MAX_GPU_PER_WORKER',
-            0))
+        max_gpu_per_worker = int(os.environ.get("MLBENCH_MAX_GPU_PER_WORKER", 0))
         slots = max_gpu_per_worker or 1
 
         hosts_with_slots = []
@@ -369,45 +376,51 @@ def run_model_job(model_run):
 
         # Use `question 22 <https://www.open-mpi.org/faq/?category=running#mpirun-hostfile`_ to add slots # noqa: E501
         exec_command = model_run.command.format(
-            hosts=','.join(hosts_with_slots),
-            run_id=model_run.id,
-            rank=0)
+            hosts=",".join(hosts_with_slots), run_id=model_run.id, rank=0
+        )
 
-        cmd_append = ''
+        cmd_append = ""
 
         if model_run.gpu_enabled:
-            cmd_append += ' --gpu'
+            cmd_append += " --gpu"
 
         if model_run.light_target:
-            cmd_append += ' --light'
+            cmd_append += " --light"
 
-        job.meta['command'] = exec_command + cmd_append
+        job.meta["command"] = exec_command + cmd_append
 
-        job.meta['master_name'] = ret.items[0].metadata.name
+        job.meta["master_name"] = ret.items[0].metadata.name
         job.save()
 
         streams = []
 
         for i, n in enumerate(ret.items):
             name = n.metadata.name
-            cmd = (model_run.command.format(
-                hosts=','.join(hosts_with_slots),
-                run_id=model_run.id,
-                rank=i) + cmd_append).split(' ')
+            cmd = (
+                model_run.command.format(
+                    hosts=",".join(hosts_with_slots), run_id=model_run.id, rank=i
+                )
+                + cmd_append
+            ).split(" ")
 
-            resp = stream.stream(v1.connect_get_namespaced_pod_exec, name,
-                                 ns,
-                                 command=cmd,
-                                 stderr=True, stdin=False,
-                                 stdout=True, tty=False,
-                                 _preload_content=False,
-                                 _request_timeout=None)
+            resp = stream.stream(
+                v1.connect_get_namespaced_pod_exec,
+                name,
+                ns,
+                command=cmd,
+                stderr=True,
+                stdin=False,
+                stdout=True,
+                tty=False,
+                _preload_content=False,
+                _request_timeout=None,
+            )
             streams.append(resp)
 
             if not model_run.run_on_all_nodes:
                 break
 
-        job.meta['stdout'].append("Started run.")
+        job.meta["stdout"].append("Started run.")
         job.save()
 
         # keep writing openmpi output to job metadata
@@ -421,25 +434,35 @@ def run_model_job(model_run):
                     s.update(timeout=5)
                     if s.peek_stdout():
                         out = s.read_stdout()
-                        if 'Goal Reached!' in out:
+                        if "Goal Reached!" in out:
                             cont = False
 
-                        job.meta['stdout'] += out.splitlines()
+                        job.meta["stdout"] += out.splitlines()
                     if s.peek_stderr():
                         err = s.read_stderr()
-                        job.meta['stderr'] += err.splitlines()
+                        job.meta["stderr"] += err.splitlines()
 
                     job.save()
                 except websocket.WebSocketConnectionClosedException:
                     cont = False
+                    continue
+                except BrokenPipeError:
+                    # Client closed connection prematurely
+                    cont = False
+                    job.meta["stderr"] += [
+                        "Container closed connection " "prematurely",
+                        "This could be "
+                        "caused by an exception or by"
+                        "training being finished",
+                    ]
                     continue
 
         model_run.state = ModelRun.FINISHED
         model_run.save()
     except (Exception, BaseException):
         model_run.state = ModelRun.FAILED
-        job.meta['stderr'].append("Run failed")
-        job.meta['stderr'].append(traceback.format_exc())
+        job.meta["stderr"].append("Run failed")
+        job.meta["stderr"].append(traceback.format_exc())
         job.save()
         model_run.save()
     finally:

@@ -7,9 +7,8 @@ jobs:
     - stage: test
       language: python
       python:
-        # - "3.4" Build fails on Version 3.4 because PyYAML requires version >= 3.5
-        - "3.5"
         - "3.6"
+        - "3.7"
 
       # Command to install dependencies, e.g. pip install -r requirements.txt --use-mirrors
       install:

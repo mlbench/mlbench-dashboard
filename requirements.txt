@@ -2,14 +2,18 @@ pip==10.0.1
 bumpversion==0.5.3
 watchdog==0.8.3
 flake8==3.5.0
+black==19.10b0
+pytest-black==0.3.8
+pre-commit
 tox==2.9.1
 coverage==4.5.1
 Sphinx==1.7.1
 sphinxcontrib-httpdomain==1.7.0
 sphinx-rtd-theme==0.4.0
 
-pytest==3.4.2
-pytest-runner==2.11.1
+pytest==5.3.5
+pytest-runner>=2.11.1
+pytest-django==3.8.0
 
 Django==2.0.8
 django-livesync==0.4

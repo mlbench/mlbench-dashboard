@@ -6,18 +6,18 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('api', '0010_modelrun_image'),
+        ("api", "0010_modelrun_image"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='modelrun',
-            name='command',
-            field=models.CharField(default='', max_length=1000),
+            model_name="modelrun",
+            name="command",
+            field=models.CharField(default="", max_length=1000),
         ),
         migrations.AddField(
-            model_name='modelrun',
-            name='run_on_all_nodes',
+            model_name="modelrun",
+            name="run_on_all_nodes",
             field=models.BooleanField(default=False),
         ),
     ]

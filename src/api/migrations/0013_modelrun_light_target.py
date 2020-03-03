@@ -6,13 +6,13 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('api', '0012_modelrun_gpu_enabled'),
+        ("api", "0012_modelrun_gpu_enabled"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='modelrun',
-            name='light_target',
+            model_name="modelrun",
+            name="light_target",
             field=models.BooleanField(default=False),
         ),
     ]

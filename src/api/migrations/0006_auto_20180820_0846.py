@@ -6,18 +6,18 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('api', '0005_kubemetric_cumulative'),
+        ("api", "0005_kubemetric_cumulative"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='modelrun',
-            name='cpu_limit',
-            field=models.CharField(default='12000m', max_length=20),
+            model_name="modelrun",
+            name="cpu_limit",
+            field=models.CharField(default="12000m", max_length=20),
         ),
         migrations.AddField(
-            model_name='modelrun',
-            name='num_workers',
+            model_name="modelrun",
+            name="num_workers",
             field=models.IntegerField(default=2),
         ),
     ]
