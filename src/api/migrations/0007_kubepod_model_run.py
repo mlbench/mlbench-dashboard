@@ -7,13 +7,19 @@ import django.db.models.deletion
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('api', '0006_auto_20180820_0846'),
+        ("api", "0006_auto_20180820_0846"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='kubepod',
-            name='model_run',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='pods', to='api.ModelRun'),
+            model_name="kubepod",
+            name="model_run",
+            field=models.ForeignKey(
+                blank=True,
+                null=True,
+                on_delete=django.db.models.deletion.SET_NULL,
+                related_name="pods",
+                to="api.ModelRun",
+            ),
         ),
     ]

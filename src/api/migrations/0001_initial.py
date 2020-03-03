@@ -7,19 +7,25 @@ class Migration(migrations.Migration):
 
     initial = True
 
-    dependencies = [
-    ]
+    dependencies = []
 
     operations = [
         migrations.CreateModel(
-            name='KubePod',
+            name="KubePod",
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True,
-                                        serialize=False, verbose_name='ID')),
-                ('name', models.CharField(max_length=50)),
-                ('labels', models.CharField(max_length=255)),
-                ('phase', models.CharField(max_length=20)),
-                ('ip', models.CharField(max_length=15)),
+                (
+                    "id",
+                    models.AutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("name", models.CharField(max_length=50)),
+                ("labels", models.CharField(max_length=255)),
+                ("phase", models.CharField(max_length=20)),
+                ("ip", models.CharField(max_length=15)),
             ],
         ),
     ]

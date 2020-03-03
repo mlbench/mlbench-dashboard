@@ -19,20 +19,22 @@ def check_new_pods():
     from api.models.kubepod import KubePod
 
     try:
-        with PidFile('new_pods') as p:
+        with PidFile("new_pods") as p:
             print(p.pidname)
             config.load_incluster_config()
             v1 = client.CoreV1Api()
 
-            release_name = os.environ.get('MLBENCH_KUBE_RELEASENAME')
-            ns = os.environ.get('MLBENCH_NAMESPACE')
+            release_name = os.environ.get("MLBENCH_KUBE_RELEASENAME")
+            ns = os.environ.get("MLBENCH_NAMESPACE")
 
             ret = v1.list_namespaced_pod(
                 ns,
-                label_selector="component=worker,app=mlbench,release={}"
-                .format(release_name))
+                label_selector="component=worker,app=mlbench,release={}".format(
+                    release_name
+                ),
+            )
 
-            all_pods = list(KubePod.objects.all().values_list('name'))
+            all_pods = list(KubePod.objects.all().values_list("name"))
 
             if len(ret.items) == 0:
                 return
@@ -43,11 +45,13 @@ def check_new_pods():
                     if ip is None:
                         ip = ""
 
-                    pod = KubePod(name=i.metadata.name,
-                                  labels=i.metadata.labels,
-                                  phase=i.status.phase,
-                                  ip=ip,
-                                  node_name=i.spec.node_name)
+                    pod = KubePod(
+                        name=i.metadata.name,
+                        labels=i.metadata.labels,
+                        phase=i.status.phase,
+                        ip=ip,
+                        node_name=i.spec.node_name,
+                    )
                     pod.save()
                 if i.metadata.name in all_pods:
                     all_pods.remove(i.metadata.name)
@@ -66,10 +70,10 @@ def check_pod_status():
     from api.models.kubepod import KubePod
 
     try:
-        with PidFile('pod_status') as p:
+        with PidFile("pod_status") as p:
             print(p.pidname)
 
-            ns = os.environ.get('MLBENCH_NAMESPACE')
+            ns = os.environ.get("MLBENCH_NAMESPACE")
 
             config.load_incluster_config()
             v1 = client.CoreV1Api()
@@ -100,9 +104,10 @@ def check_pod_metrics():
 
     from api.models.kubemetric import KubeMetric
     from api.models.kubepod import KubePod
+
     data = None
     try:
-        with PidFile('pod_metrics') as p:
+        with PidFile("pod_metrics") as p:
             print(p.pidname)
 
             all_pods = KubePod.objects.all()
@@ -115,94 +120,106 @@ def check_pod_metrics():
             pods = []
 
             for node in nodes:
-                url = 'http://{}:10255/stats/summary/'.format(node)
+                url = "http://{}:10255/stats/summary/".format(node)
                 try:
                     with urllib.request.urlopen(url) as response:
-                        data = json.loads(response.read().decode('utf-8'))
-                        pods += data['pods']
+                        data = json.loads(response.read().decode("utf-8"))
+                        pods += data["pods"]
                 except Exception as e:
-                    logger.error("Couldn't get performance data: {}, {}".format(url, repr(e)))
+                    logger.error(
+                        "Couldn't get performance data: {}, {}".format(url, repr(e))
+                    )
 
             for pod in pods:
-                if pod['podRef']['name'] not in all_pods:
+                if pod["podRef"]["name"] not in all_pods:
                     continue
 
-                current_pod = all_pods[pod['podRef']['name']]
+                current_pod = all_pods[pod["podRef"]["name"]]
 
-                if not pod['containers'] or len(pod['containers']) == 0:
+                if not pod["containers"] or len(pod["containers"]) == 0:
                     continue
 
-                cont_data = pod['containers'][0]
+                cont_data = pod["containers"][0]
 
-                newest_cpu_time = current_pod.metrics.filter(name='cpu')\
-                    .aggregate(Max('date'))['date__max']
+                newest_cpu_time = current_pod.metrics.filter(name="cpu").aggregate(
+                    Max("date")
+                )["date__max"]
 
                 new_time = datetime.strptime(
-                    cont_data['cpu']['time'],
-                    "%Y-%m-%dT%H:%M:%SZ")
+                    cont_data["cpu"]["time"], "%Y-%m-%dT%H:%M:%SZ"
+                )
                 new_time = pytz.utc.localize(new_time)
 
-                if ((not newest_cpu_time or new_time > newest_cpu_time)
-                        and 'cpu' in cont_data and 'usageNanoCores' in cont_data['cpu']):
+                if (
+                    (not newest_cpu_time or new_time > newest_cpu_time)
+                    and "cpu" in cont_data
+                    and "usageNanoCores" in cont_data["cpu"]
+                ):
                     metric = KubeMetric(
-                        name='cpu',
-                        date=cont_data['cpu']['time'],
-                        value=cont_data['cpu']['usageNanoCores'] / 10**9,
+                        name="cpu",
+                        date=cont_data["cpu"]["time"],
+                        value=cont_data["cpu"]["usageNanoCores"] / 10 ** 9,
                         metadata="",
                         cumulative=False,
-                        pod=current_pod
+                        pod=current_pod,
                     )
                     metric.save()
 
-                newest_memory_time = current_pod.metrics.filter(name='memory')\
-                    .aggregate(Max('date'))['date__max']
+                newest_memory_time = current_pod.metrics.filter(
+                    name="memory"
+                ).aggregate(Max("date"))["date__max"]
 
                 new_time = datetime.strptime(
-                    cont_data['memory']['time'],
-                    "%Y-%m-%dT%H:%M:%SZ")
+                    cont_data["memory"]["time"], "%Y-%m-%dT%H:%M:%SZ"
+                )
                 new_time = pytz.utc.localize(new_time)
 
-                if ((not newest_memory_time or new_time > newest_memory_time)
-                        and 'memory' in cont_data and 'usageBytes' in cont_data['memory']):
+                if (
+                    (not newest_memory_time or new_time > newest_memory_time)
+                    and "memory" in cont_data
+                    and "usageBytes" in cont_data["memory"]
+                ):
                     metric = KubeMetric(
-                        name='memory',
-                        date=cont_data['memory']['time'],
-                        value=cont_data['memory']
-                                       ['usageBytes'] / (1024 * 1024),
+                        name="memory",
+                        date=cont_data["memory"]["time"],
+                        value=cont_data["memory"]["usageBytes"] / (1024 * 1024),
                         metadata="",
                         cumulative=False,
-                        pod=current_pod
+                        pod=current_pod,
                     )
                     metric.save()
 
-                newest_network_time = current_pod.metrics\
-                    .filter(name='network_in')\
-                    .aggregate(Max('date'))['date__max']
+                newest_network_time = current_pod.metrics.filter(
+                    name="network_in"
+                ).aggregate(Max("date"))["date__max"]
 
                 new_time = datetime.strptime(
-                    pod['network']['time'],
-                    "%Y-%m-%dT%H:%M:%SZ")
+                    pod["network"]["time"], "%Y-%m-%dT%H:%M:%SZ"
+                )
                 new_time = pytz.utc.localize(new_time)
 
-                if ((not newest_network_time or new_time > newest_network_time)
-                        and 'network' in pod and 'rxBytes' in pod['network']):
+                if (
+                    (not newest_network_time or new_time > newest_network_time)
+                    and "network" in pod
+                    and "rxBytes" in pod["network"]
+                ):
                     metric = KubeMetric(
-                        name='network_in',
-                        date=pod['network']['time'],
-                        value=pod['network']['rxBytes'] / (1024 * 1024),
+                        name="network_in",
+                        date=pod["network"]["time"],
+                        value=pod["network"]["rxBytes"] / (1024 * 1024),
                         metadata="",
                         cumulative=True,
-                        pod=current_pod
+                        pod=current_pod,
                     )
                     metric.save()
 
                     metric = KubeMetric(
-                        name='network_out',
-                        date=pod['network']['time'],
-                        value=pod['network']['txBytes'] / (1024 * 1024),
+                        name="network_out",
+                        date=pod["network"]["time"],
+                        value=pod["network"]["txBytes"] / (1024 * 1024),
                         metadata="",
                         cumulative=True,
-                        pod=current_pod
+                        pod=current_pod,
                     )
                     metric.save()
     except PidFileError:

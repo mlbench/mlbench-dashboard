@@ -4,17 +4,17 @@ import json
 import datetime
 import random
 
-url = 'http://10.192.0.2:30260/api/metrics/'
+url = "http://10.192.0.2:30260/api/metrics/"
 
 for i in range(25000):
     data = {
         "run_id": 1,
-        "name": 'test_metric @ {}'.format(0),#random.randint(0, 7)),
+        "name": "test_metric @ {}".format(0),  # random.randint(0, 7)),
         "cumulative": False,
         "date": str(datetime.datetime.now()),
         "value": str(random.random() * 100),
-        "metadata": {'epoch': i, 'rank': 0}
-        }
+        "metadata": {"epoch": i, "rank": 0},
+    }
 
     requests.post(url, data=data)
 

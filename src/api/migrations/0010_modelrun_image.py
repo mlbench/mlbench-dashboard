@@ -6,13 +6,13 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('api', '0009_auto_20180910_1311'),
+        ("api", "0009_auto_20180910_1311"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='modelrun',
-            name='image',
-            field=models.CharField(default='mlbench/mlbench_worker', max_length=100),
+            model_name="modelrun",
+            name="image",
+            field=models.CharField(default="mlbench/mlbench_worker", max_length=100),
         ),
     ]

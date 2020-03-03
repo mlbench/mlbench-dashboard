@@ -12,18 +12,12 @@ class ModelRun(models.Model):
     STARTED = "started"
     FAILED = "failed"
     FINISHED = "finished"
-    STATE_CHOICES = [
-        (STARTED, STARTED),
-        (FAILED, FAILED),
-        (FINISHED, FINISHED)]
+    STATE_CHOICES = [(STARTED, STARTED), (FAILED, FAILED), (FINISHED, FINISHED)]
 
     name = models.CharField(max_length=100)
     created_at = models.DateTimeField(auto_now_add=True)
     finished_at = models.DateTimeField(default=None, blank=True, null=True)
-    state = models.CharField(
-        max_length=20,
-        choices=STATE_CHOICES,
-        default=INITIALIZED)
+    state = models.CharField(max_length=20, choices=STATE_CHOICES, default=INITIALIZED)
     job_id = models.CharField(max_length=38, default="")
 
     cpu_limit = models.CharField(max_length=20, default="12000m")
@@ -51,7 +45,7 @@ class ModelRun(models.Model):
         run_model_job.delay(self)
 
 
-@receiver(pre_delete, sender=ModelRun, dispatch_uid='run_delete_job')
+@receiver(pre_delete, sender=ModelRun, dispatch_uid="run_delete_job")
 def remove_run_job(sender, instance, using, **kwargs):
     """Signal to delete job when ModelRun is deleted"""
     redis_conn = django_rq.get_connection()

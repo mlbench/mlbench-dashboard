@@ -6,13 +6,13 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('api', '0007_kubepod_model_run'),
+        ("api", "0007_kubepod_model_run"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='modelrun',
-            name='finished_at',
+            model_name="modelrun",
+            name="finished_at",
             field=models.DateTimeField(blank=True, default=None, null=True),
         ),
     ]

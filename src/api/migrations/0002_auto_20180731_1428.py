@@ -7,33 +7,41 @@ import django.db.models.deletion
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('api', '0001_initial'),
+        ("api", "0001_initial"),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='KubeMetric',
+            name="KubeMetric",
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True,
-                                        serialize=False, verbose_name='ID')),
-                ('name', models.CharField(max_length=50)),
-                ('date', models.DateTimeField()),
-                ('value', models.CharField(max_length=100)),
-                ('metadata', models.TextField()),
+                (
+                    "id",
+                    models.AutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("name", models.CharField(max_length=50)),
+                ("date", models.DateTimeField()),
+                ("value", models.CharField(max_length=100)),
+                ("metadata", models.TextField()),
             ],
         ),
         migrations.AddField(
-            model_name='kubepod',
-            name='node_name',
-            field=models.CharField(default='node1', max_length=100),
+            model_name="kubepod",
+            name="node_name",
+            field=models.CharField(default="node1", max_length=100),
             preserve_default=False,
         ),
         migrations.AddField(
-            model_name='kubemetric',
-            name='pod',
+            model_name="kubemetric",
+            name="pod",
             field=models.ForeignKey(
                 on_delete=django.db.models.deletion.CASCADE,
-                related_name='metrics',
-                to='api.KubePod'),
+                related_name="metrics",
+                to="api.KubePod",
+            ),
         ),
     ]

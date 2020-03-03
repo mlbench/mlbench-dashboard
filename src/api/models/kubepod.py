@@ -11,8 +11,5 @@ class KubePod(models.Model):
     node_name = models.CharField(max_length=1000)
 
     model_run = models.ForeignKey(
-        ModelRun,
-        related_name='pods',
-        blank=True,
-        null=True,
-        on_delete=models.SET_NULL)
+        ModelRun, related_name="pods", blank=True, null=True, on_delete=models.SET_NULL
+    )

@@ -10,15 +10,13 @@ class KubeMetric(models.Model):
     cumulative = models.BooleanField(default=False)
 
     pod = models.ForeignKey(
-        KubePod,
-        related_name='metrics',
-        blank=True,
-        null=True,
-        on_delete=models.CASCADE)
+        KubePod, related_name="metrics", blank=True, null=True, on_delete=models.CASCADE
+    )
 
     model_run = models.ForeignKey(
         ModelRun,
-        related_name='metrics',
+        related_name="metrics",
         blank=True,
         null=True,
-        on_delete=models.CASCADE)
+        on_delete=models.CASCADE,
+    )

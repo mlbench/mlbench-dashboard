@@ -11,22 +11,23 @@ import math
 
 # Create your views here.
 def index(request):
-    return render(request, 'main/index.html')
+    return render(request, "main/index.html")
 
 
 def worker(request, pod_name):
     worker = KubePod.objects.get(name=pod_name)
-    metrics = worker.metrics.order_by('name').values('name').distinct()
-    return render(request, 'main/worker_detail.html',
-                  {'worker': worker, 'metrics': metrics})
+    metrics = worker.metrics.order_by("name").values("name").distinct()
+    return render(
+        request, "main/worker_detail.html", {"worker": worker, "metrics": metrics}
+    )
 
 
 def runs(request):
     """List all runs page"""
     runs = ModelRun.objects.all()
 
-    max_workers = os.environ.get('MLBENCH_MAX_WORKERS')
-    max_cpu = os.environ.get('MLBENCH_WORKER_MAX_CPU')
+    max_workers = os.environ.get("MLBENCH_MAX_WORKERS")
+    max_cpu = os.environ.get("MLBENCH_WORKER_MAX_CPU")
 
     if "m" in max_cpu:
         max_cpu = int(max_cpu.replace("m", "")) / 1000
@@ -34,19 +35,23 @@ def runs(request):
         max_cpu = int(max_cpu)
 
     max_workers = int(max_workers)
-    worker_ticks = [str(2 ** i) for i in range(
-        0,
-        math.floor(math.log2(max_workers)) + 1)]
+    worker_ticks = [
+        str(2 ** i) for i in range(0, math.floor(math.log2(max_workers)) + 1)
+    ]
 
-    return render(request, 'main/runs.html', {
-        'runs': runs,
-        'max_workers': max_workers,
-        'worker_ticks': ', '.join(worker_ticks),
-        'worker_tick_labels': ', '.join('"{}"'.format(i)
-                                        for i in worker_ticks),
-        'max_cpus': max_cpu,
-        'max_memory': 30000,
-        "images": settings.MLBENCH_IMAGES})
+    return render(
+        request,
+        "main/runs.html",
+        {
+            "runs": runs,
+            "max_workers": max_workers,
+            "worker_ticks": ", ".join(worker_ticks),
+            "worker_tick_labels": ", ".join('"{}"'.format(i) for i in worker_ticks),
+            "max_cpus": max_cpu,
+            "max_memory": 30000,
+            "images": settings.MLBENCH_IMAGES,
+        },
+    )
 
 
 def run(request, run_id):
@@ -58,8 +63,6 @@ def run(request, run_id):
 
     run.job_metadata = job.meta
 
-    metrics = run.metrics.order_by('name').values('name').distinct()
+    metrics = run.metrics.order_by("name").values("name").distinct()
 
-    return render(request,
-                  'main/run_detail.html',
-                  {'run': run, 'metrics': metrics})
+    return render(request, "main/run_detail.html", {"run": run, "metrics": metrics})

@@ -6,13 +6,13 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('api', '0013_modelrun_light_target'),
+        ("api", "0013_modelrun_light_target"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='kubemetric',
-            name='value',
+            model_name="kubemetric",
+            name="value",
             field=models.CharField(max_length=255),
         ),
     ]
