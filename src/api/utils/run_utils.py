@@ -433,6 +433,14 @@ def run_model_job(model_run):
                 except websocket.WebSocketConnectionClosedException:
                     cont = False
                     continue
+                except BrokenPipeError:
+                    # Client closed connection prematurely
+                    cont = False
+                    job.meta['stderr'] += ["Container closed connection "
+                                           "prematurely", "This could be "
+                                           "caused by an exception or by"
+                                           "training being finished"
+                    continue
 
         model_run.state = ModelRun.FINISHED
         model_run.save()
