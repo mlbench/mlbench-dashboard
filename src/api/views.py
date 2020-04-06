@@ -432,22 +432,16 @@ class ModelRunView(ViewSet):
 
         image = d["image_name"]
         backend = d["backend"]
-        run_all = d["run_all_nodes"]
-        print(run_all)
+        run_all = d["run_all_nodes"] == "true"
         gpu = False
 
         if image == "custom_image":
             image = d["custom_image_name"]
             command = d["custom_image_command"]
-            # run_all = d["custom_image_all_nodes"]
             gpu = d["gpu_enabled"] == "true"
-            if isinstance(run_all, str):
-                run_all = run_all == "true"
         else:
             entry = settings.MLBENCH_IMAGES[image]
             command = entry[1]
-            # run_all = entry[2]
-
             if entry[3]:
                 gpu = d["gpu_enabled"] == "true"
 

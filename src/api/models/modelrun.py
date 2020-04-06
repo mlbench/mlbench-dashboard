@@ -16,7 +16,7 @@ class ModelRun(models.Model):
     NCCL = "nccl"
     GLOO = "gloo"
     STATE_CHOICES = [(STARTED, STARTED), (FAILED, FAILED), (FINISHED, FINISHED)]
-    BACKENDS = [MPI, NCCL, GLOO]
+    BACKENDS = [(MPI, MPI), (NCCL, NCCL), (GLOO, GLOO)]
 
     name = models.CharField(max_length=100)
     created_at = models.DateTimeField(auto_now_add=True)
