@@ -386,7 +386,6 @@ def run_model_job(model_run):
 
         if model_run.backend == "mpi":
             cmd_prepend = MPI_COMMAND
-            model_run.run_on_all_nodes = False # Don't run on all if MPI
 
         if model_run.gpu_enabled:
             cmd_append += " --gpu"

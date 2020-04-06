@@ -56,10 +56,15 @@
                         {% for b in backends%}
                             <option value="{{b}}">{{b}}</option>
                         {% endfor %}
+                        <option value="custom_backend">Custom Backend</option>
                       </select>
                     <div class="invalid-feedback">
                         Please select a backend.
                     </div>
+                </div>
+                <div class="form-group collapse" id="custom-backend-collapse">
+                    <label for="custom-backend" class="col-form-label">Backend:</label>
+                    <input class="form-control" id="custom-backend">
                 </div>
                 <div class="form-group" id="enable-gpu">
                     <label for="gpu-enabled" class="col-form-label">GPU:</label><br>
@@ -116,6 +121,8 @@
         $('#add-run-modal').on('show.bs.modal', function (e) {
             //$('#run-name').val("Run " + new Date().toString());
             $("#custom-image-collapse").collapse("hide");
+            $("#custom-backend-collapse").collapse("hide")
+            $("#all-nodes").hide();
             $("#image-name").val($("#image-name option:first").val());
             $("#backend").val($("#backend option:first").val());
         });
@@ -140,6 +147,19 @@
                     $("#enable-gpu").hide();
                 }
             }
+        });
+
+        $("#backend").change(function(){
+           var backend_name = $("#backend").val();
+           if (backend_name == "custom_backend") {
+               $("#custom-backend-collapse").collapse("show");
+               $("#all-nodes").show();
+               $("#custom-backend").prop("required", true);
+           }else{
+               $("#custom-backend-collapse").collapse("hide");
+               $("#all-nodes").hide();
+               $("#custom-backend").prop("required", false);
+           }
         });
 
         // sliders
@@ -182,6 +202,7 @@
                     backend: $("#backend").val(),
                     custom_image_name: $('#custom-image-name').val(),
                     custom_image_command: $("#custom-image-command").val(),
+                    custom_backend: $("#custom-backend").val(),
                     run_all_nodes: $("#run-all-nodes").is(':checked'),
                     gpu_enabled: $("#gpu-enabled").is(':checked'),
                     light_target: $("#light-target").is(':checked'),

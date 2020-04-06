@@ -52,8 +52,8 @@ class KubeMetricsView(ViewSet):
             temp_filter = q & Q(name=name)
             filtered_metrics = (
                 metrics.filter(temp_filter)
-                .order_by("date")
-                .values("date", "value", "cumulative")
+                    .order_by("date")
+                    .values("date", "value", "cumulative")
             )
 
             metric_count = filtered_metrics.count()
@@ -103,8 +103,8 @@ class KubeMetricsView(ViewSet):
             temp_filter = q & Q(name=name)
             filtered_metrics = (
                 metrics.filter(temp_filter)
-                .order_by("date")
-                .values("date", "value", "cumulative")
+                    .order_by("date")
+                    .values("date", "value", "cumulative")
             )
 
             metric_count = filtered_metrics.count()
@@ -170,9 +170,9 @@ class KubeMetricsView(ViewSet):
                     for e in sorted(g[1], key=lambda x: x.date)
                 ]
                 for g in groupby(
-                    sorted(pod.metrics.all(), key=lambda m: m.name),
-                    key=lambda m: m.name,
-                )
+                sorted(pod.metrics.all(), key=lambda m: m.name),
+                key=lambda m: m.name,
+            )
             }
             for pod in KubePod.objects.all()
         }
@@ -184,9 +184,9 @@ class KubeMetricsView(ViewSet):
                     for e in sorted(g[1], key=lambda x: x.date)
                 ]
                 for g in groupby(
-                    sorted(run.metrics.all(), key=lambda m: m.name),
-                    key=lambda m: m.name,
-                )
+                sorted(run.metrics.all(), key=lambda m: m.name),
+                key=lambda m: m.name,
+            )
             }
             for run in ModelRun.objects.all()
         }
@@ -250,7 +250,7 @@ class KubeMetricsView(ViewSet):
         result_file = io.BytesIO()
 
         with zipfile.ZipFile(
-            result_file, mode="w", compression=zipfile.ZIP_DEFLATED
+                result_file, mode="w", compression=zipfile.ZIP_DEFLATED
         ) as zf:
 
             if metric_type == "run":
@@ -432,7 +432,6 @@ class ModelRunView(ViewSet):
 
         image = d["image_name"]
         backend = d["backend"].lower()
-        run_all = d["run_all_nodes"] == "true"
         gpu = False
 
         if image == "custom_image":
@@ -444,6 +443,12 @@ class ModelRunView(ViewSet):
             command = entry[1]
             if entry[2]:
                 gpu = d["gpu_enabled"] == "true"
+
+        if backend == "custom_backend":
+            backend = d["custom_backend"]
+            run_all = d["run_all_nodes"] == "true"
+        else:
+            run_all = backend != "mpi"
 
         cpu = "{}m".format(float(d["num_cpus"]) * 1000)
 
