@@ -47,8 +47,19 @@
                     <input class="form-control" id="custom-image-name">
                     <label for="custom-image-command" class="col-form-label">Command:</label>
                     <input class="form-control" id="custom-image-command" data-toggle="tooltip" data-placement="right" title="Available Placeholders:<br><ul><li><b>&#123;hosts&#125;</b> Comma separated list of worker hostnames</li><li><b>&#123;run_id&#125;</b> ID (int) of a run</li><li><b>&#123;rank&#125;</b> The rank of the individual node the command is run on</li></ul>" data-html="true">
-                    <label for="custom-image-all-nodes" class="col-form-label">Run on all nodes:</label>
-                    <input type="checkbox" class="form-control" id="custom-image-all-nodes" data-toggle="tooltip" data-placement="right" title="Whether to run the command on all workers or only on the first one (e.g. for openmpi)">
+                    <!--<label for="custom-image-all-nodes" class="col-form-label">Run on all nodes:</label>-->
+                    <!--<input type="checkbox" class="form-control" id="custom-image-all-nodes" data-toggle="tooltip" data-placement="right" title="Whether to run the command on all workers or only on the first one (e.g. for openmpi)">-->
+                </div>
+                <div class="form-group">
+                    <label for="backend" class="col-form-label">Backend:</label>
+                    <select class="form-control" id="backend" required>
+                        {% for b in backends%}
+                            <option value="{{b}}">{{b}}</option>
+                        {% endfor %}
+                      </select>
+                    <div class="invalid-feedback">
+                        Please select a backend.
+                    </div>
                 </div>
                 <div class="form-group" id="enable-gpu">
                     <label for="gpu-enabled" class="col-form-label">GPU:</label><br>
@@ -106,6 +117,7 @@
             //$('#run-name').val("Run " + new Date().toString());
             $("#custom-image-collapse").collapse("hide");
             $("#image-name").val($("#image-name option:first").val());
+            $("#backend").val($("#backend option:first").val());
         });
 
         $('.collapse').collapse();
@@ -167,10 +179,11 @@
                     num_cpus: $('#num-cpus').val(),
                     max_memory: $('#max-memory').val(),
                     image_name: $('#image-name').val(),
+                    backend: $("#backend").val(),
                     custom_image_name: $('#custom-image-name').val(),
                     custom_image_command: $("#custom-image-command").val(),
                     run_all_nodes: $("#run-all-nodes").is(':checked'),
-                    custom_image_all_nodes: $("#custom-image-all-nodes").is(':checked'),
+                    // custom_image_all_nodes: $("#custom-image-all-nodes").is(':checked'),
                     gpu_enabled: $("#gpu-enabled").is(':checked'),
                     light_target: $("#light-target").is(':checked'),
                 },
