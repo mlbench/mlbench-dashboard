@@ -431,7 +431,7 @@ class ModelRunView(ViewSet):
         d = request.data
 
         image = d["image_name"]
-        backend = d["backend"]
+        backend = d["backend"].lower()
         run_all = d["run_all_nodes"] == "true"
         gpu = False
 
