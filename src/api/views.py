@@ -442,7 +442,7 @@ class ModelRunView(ViewSet):
         else:
             entry = settings.MLBENCH_IMAGES[image]
             command = entry[1]
-            if entry[3]:
+            if entry[2]:
                 gpu = d["gpu_enabled"] == "true"
 
         cpu = "{}m".format(float(d["num_cpus"]) * 1000)
