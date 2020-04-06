@@ -154,7 +154,7 @@ MLBENCH_IMAGES = {
         "/.openmpi/bin/mpirun --mca btl_tcp_if_exclude docker0,lo "
         "-x KUBERNETES_SERVICE_HOST -x KUBERNETES_SERVICE_PORT "
         "-x LD_LIBRARY_PATH=/usr/local/nvidia/lib64 --host {hosts}"
-        " /conda/bin/python /codes/main.py --run_id {run_id}",
+        " /conda/bin/python /codes/main.py --run_id {run_id} --rank {rank} --hosts {hosts} --backend {backend}",
         False,
         True,
     ),
@@ -163,7 +163,7 @@ MLBENCH_IMAGES = {
         "/.openmpi/bin/mpirun --mca btl_tcp_if_exclude docker0,lo "
         "-x KUBERNETES_SERVICE_HOST -x KUBERNETES_SERVICE_PORT "
         "-x LD_LIBRARY_PATH=/usr/local/nvidia/lib64 --host {hosts}"
-        " /conda/bin/python /codes/main.py --run_id {run_id}",
+        " /conda/bin/python /codes/main.py --run_id {run_id} --rank {rank} --hosts {hosts} --backend {backend}",
         False,
         True,
     ),
@@ -172,7 +172,7 @@ MLBENCH_IMAGES = {
         "/.openmpi/bin/mpirun --mca btl_tcp_if_exclude docker0,lo "
         "-x KUBERNETES_SERVICE_HOST -x KUBERNETES_SERVICE_PORT "
         "-x LD_LIBRARY_PATH=/usr/local/nvidia/lib64 --host {hosts}"
-        " /conda/bin/python /codes/main.py --run_id {run_id}",
+        " /conda/bin/python /codes/main.py --run_id {run_id} --rank {rank} --hosts {hosts} --backend {backend}",
         False,
         True,
     ),
@@ -181,7 +181,7 @@ MLBENCH_IMAGES = {
         "/.openmpi/bin/mpirun --mca btl_tcp_if_exclude docker0,lo "
         "-x KUBERNETES_SERVICE_HOST -x KUBERNETES_SERVICE_PORT "
         "-x LD_LIBRARY_PATH=/usr/local/nvidia/lib64 --host {hosts} "
-        "/conda/bin/python /codes/main.py --run_id {run_id} --hosts {hosts}",
+        "/conda/bin/python /codes/main.py --run_id {run_id} --rank {rank} --hosts {hosts} --backend {backend}",
         False,
         False,
     ),
