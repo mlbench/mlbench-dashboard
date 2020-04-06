@@ -54,6 +54,10 @@
                     <label for="gpu-enabled" class="col-form-label">GPU:</label><br>
                     <input type="checkbox" class="form-control" id="gpu-enabled" data-toggle="tooltip" data-placement="right" title="Whether to train on GPU or not">
                 </div>
+                <div class="form-group" id="all-nodes">
+                    <label for="run-all-nodes" class="col-form-label">Run on all nodes:</label>
+                    <input type="checkbox" class="form-control" id="run-all-nodes" data-toggle="tooltip" data-placement="right" title="Whether to run the command on all workers or only on the first one (e.g. for openmpi)">
+                </div>
                 <div class="form-group" id="target-type">
                     <label for="light-target" class="col-form-label">Light Target Goal:</label><br>
                     <input type="checkbox" class="form-control" id="light-target" data-toggle="tooltip" data-placement="right" title="Wether to run with full or light target metric goal">
@@ -165,6 +169,7 @@
                     image_name: $('#image-name').val(),
                     custom_image_name: $('#custom-image-name').val(),
                     custom_image_command: $("#custom-image-command").val(),
+                    run_all_nodes: $("#run-all-nodes").is(':checked'),
                     custom_image_all_nodes: $("#custom-image-all-nodes").is(':checked'),
                     gpu_enabled: $("#gpu-enabled").is(':checked'),
                     light_target: $("#light-target").is(':checked'),

@@ -1,26 +1,27 @@
-from api.models import KubePod, KubeMetric, ModelRun
-from api.serializers import KubePodSerializer, ModelRunSerializer, KubeMetricsSerializer
-from api.utils.utils import secure_filename
-from api.utils.run_utils import delete_statefulset, delete_service
-
-from rest_framework.viewsets import ViewSet
-from rest_framework.response import Response
-from rest_framework import status
-import django_rq
-from rq.job import Job
-from django.utils.dateparse import parse_datetime
-from django.db.models import Q
-from django.core.serializers.json import DjangoJSONEncoder
-from django.core.exceptions import ObjectDoesNotExist
-from django.conf import settings
-
-from itertools import groupby
-from datetime import datetime
-import pytz
-import zipfile
 import io
 import json
+import os
+import zipfile
+from datetime import datetime
+from itertools import groupby
 from math import ceil
+
+import django_rq
+import pytz
+from django.conf import settings
+from django.core.exceptions import ObjectDoesNotExist
+from django.core.serializers.json import DjangoJSONEncoder
+from django.db.models import Q
+from django.utils.dateparse import parse_datetime
+from rest_framework import status
+from rest_framework.response import Response
+from rest_framework.viewsets import ViewSet
+from rq.job import Job
+
+from api.models import KubePod, KubeMetric, ModelRun
+from api.serializers import KubePodSerializer, ModelRunSerializer, KubeMetricsSerializer
+from api.utils.run_utils import delete_statefulset, delete_service
+from api.utils.utils import secure_filename
 
 
 class KubePodView(ViewSet):
@@ -430,20 +431,22 @@ class ModelRunView(ViewSet):
         d = request.data
 
         image = d["image_name"]
-
+        backend = d["backend"]
+        run_all = d["run_all_nodes"]
+        print(run_all)
         gpu = False
 
         if image == "custom_image":
             image = d["custom_image_name"]
             command = d["custom_image_command"]
-            run_all = d["custom_image_all_nodes"]
+            # run_all = d["custom_image_all_nodes"]
             gpu = d["gpu_enabled"] == "true"
             if isinstance(run_all, str):
                 run_all = run_all == "true"
         else:
             entry = settings.MLBENCH_IMAGES[image]
             command = entry[1]
-            run_all = entry[2]
+            # run_all = entry[2]
 
             if entry[3]:
                 gpu = d["gpu_enabled"] == "true"
@@ -456,6 +459,7 @@ class ModelRunView(ViewSet):
             cpu_limit=cpu,
             image=image,
             command=command,
+            backend=backend,
             run_on_all_nodes=run_all,
             gpu_enabled=gpu,
             light_target=d["light_target"] == "true",
