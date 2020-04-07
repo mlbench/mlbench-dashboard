@@ -160,7 +160,7 @@ MLBENCH_IMAGES = {
         "/conda/bin/python /codes/main.py --run_id {run_id} --rank {rank} --hosts {hosts} --backend {backend}",
         True,
     ),
-    "mlbench/pytorch-openmpi-epsilon-logistic-regression-all-reduce:latest": (
+    "mlbench/pytorch-epsilon-logistic-regression-all-reduce:latest": (
         "PyTorch Linear Logistic Regression",
         "/conda/bin/python /codes/main.py --run_id {run_id} --rank {rank} --hosts {hosts} --backend {backend}",
         True,
