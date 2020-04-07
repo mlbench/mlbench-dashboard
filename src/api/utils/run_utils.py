@@ -385,7 +385,7 @@ def run_model_job(model_run):
         cmd_append = ""
 
         if model_run.backend == "mpi":
-            cmd_prepend = MPI_COMMAND
+            cmd_prepend = MPI_COMMAND.format(hosts=",".join(hosts_with_slots))
 
         if model_run.gpu_enabled:
             cmd_append += " --gpu"
