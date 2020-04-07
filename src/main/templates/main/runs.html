@@ -112,7 +112,7 @@
         var image_settings = {
             {% for image, details in images.items%}
                 "{{image}}": {
-                    "gpu": {{details.3|yesno:"true,false" }}
+                    "gpu": {{details.2|yesno:"true,false" }}
                 },
             {% endfor %}
         };
