@@ -46,7 +46,7 @@
                     <label for="custom-image-name" class="col-form-label">Image:</label>
                     <input class="form-control" id="custom-image-name">
                     <label for="custom-image-command" class="col-form-label">Command:</label>
-                    <input class="form-control" id="custom-image-command" data-toggle="tooltip" data-placement="right" title="Available Placeholders:<br><ul><li><b>&#123;hosts&#125;</b> Comma separated list of worker hostnames</li><li><b>&#123;run_id&#125;</b> ID (int) of a run</li><li><b>&#123;rank&#125;</b> The rank of the individual node the command is run on</li></ul>" data-html="true">
+                    <input class="form-control" id="custom-image-command" data-toggle="tooltip" data-placement="right" title="Available Placeholders:<br><ul><li><b>&#123;hosts&#125;</b> Comma separated list of worker hostnames</li><li><b>&#123;run_id&#125;</b> ID (int) of a run</li><li><b>&#123;rank&#125;</b> The rank of the individual node the command is run on</li><li><b>&#123;backend&#125;</b> The communication backend to use</li></ul>" data-html="true">
                     <!--<label for="custom-image-all-nodes" class="col-form-label">Run on all nodes:</label>-->
                     <!--<input type="checkbox" class="form-control" id="custom-image-all-nodes" data-toggle="tooltip" data-placement="right" title="Whether to run the command on all workers or only on the first one (e.g. for openmpi)">-->
                 </div>
@@ -64,7 +64,7 @@
                 </div>
                 <div class="form-group collapse" id="custom-backend-collapse">
                     <label for="custom-backend" class="col-form-label">Backend:</label>
-                    <input class="form-control" id="custom-backend">
+                    <input class="form-control" id="custom-backend" data-toggle="tooltip" data-placement="right" title="Custom backend to use, will be passed through <b>&#123;backend&#125;</b> argument in the command">
                 </div>
                 <div class="form-group" id="enable-gpu">
                     <label for="gpu-enabled" class="col-form-label">GPU:</label><br>
