@@ -161,7 +161,7 @@ MLBENCH_IMAGES = {
         "/conda/bin/python /codes/main.py --run_id {run_id} --rank {rank} --hosts {hosts} --backend {backend}",
         True,
     ),
-    "mlbench/pytorch-wmt14-gnmt:latest": (
+    "mlbench/pytorch-wmt14-gnmt-all-reduce:latest": (
         "PyTorch Machine Translation GNMT",
         "/conda/bin/python /codes/main.py --run_id {run_id} --rank {rank} --hosts {hosts} --backend {backend}",
         True,
