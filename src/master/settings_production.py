@@ -165,6 +165,11 @@ MLBENCH_IMAGES = {
         "/conda/bin/python /codes/main.py --run_id {run_id} --rank {rank} --hosts {hosts} --backend {backend}",
         True,
     ),
+    "mlbench/pytorch-wmt14-gnmt:latest": (
+        "PyTorch Machine Translation GNMT",
+        "/conda/bin/python /codes/main.py --run_id {run_id} --rank {rank} --hosts {hosts} --backend {backend}",
+        True,
+    ),
     "mlbench/tensorflow-cifar10-resnet:latest": (
         "Tensorflow Cifar-10 ResNet-20",
         "/conda/bin/python /codes/main.py --run_id {run_id} --rank {rank} --hosts {hosts} --backend {backend}",
