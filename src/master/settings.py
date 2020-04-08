@@ -15,7 +15,6 @@ import os
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
-
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/2.0/howto/deployment/checklist/
 
@@ -26,7 +25,6 @@ SECRET_KEY = "g+g1=lxqwg1#2)#su3)pulz4(dl2jf!5l9d3pn=w+3puk5o(+2"
 DEBUG = True
 
 ALLOWED_HOSTS = ["*"]
-
 
 # Application definition
 
@@ -77,7 +75,6 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "master.wsgi.application"
 
-
 # Database
 # https://docs.djangoproject.com/en/2.0/ref/settings/#databases
 
@@ -104,11 +101,10 @@ AUTH_PASSWORD_VALIDATORS = [
     {
         "NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator",  # noqa E501
     },
-    {"NAME": "django.contrib.auth.password_validation.MinimumLengthValidator",},
-    {"NAME": "django.contrib.auth.password_validation.CommonPasswordValidator",},
-    {"NAME": "django.contrib.auth.password_validation.NumericPasswordValidator",},
+    {"NAME": "django.contrib.auth.password_validation.MinimumLengthValidator", },
+    {"NAME": "django.contrib.auth.password_validation.CommonPasswordValidator", },
+    {"NAME": "django.contrib.auth.password_validation.NumericPasswordValidator", },
 ]
-
 
 # Internationalization
 # https://docs.djangoproject.com/en/2.0/topics/i18n/
@@ -123,7 +119,6 @@ USE_L10N = True
 
 USE_TZ = True
 
-
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/2.0/howto/static-files/
 
@@ -136,48 +131,39 @@ CONSTANCE_BACKEND = "constance.backends.database.DatabaseBackend"
 CONSTANCE_CONFIG = {"FIRST_TIME": (True, "Whether to execute first time setup wizard")}
 
 RQ_QUEUES = {
-    "default": {"HOST": "localhost", "PORT": 6379, "DB": 0, "DEFAULT_TIMEOUT": 360,},
-    "high": {"HOST": "localhost", "PORT": 6379, "DB": 0, "DEFAULT_TIMEOUT": 360,},
+    "default": {"HOST": "localhost", "PORT": 6379, "DB": 0, "DEFAULT_TIMEOUT": 360, },
+    "high": {"HOST": "localhost", "PORT": 6379, "DB": 0, "DEFAULT_TIMEOUT": 360, },
 }
 
 FIXTURE_DIRS = ("api/fixtures/",)
 
-# available images. [("Name", "image", "command", send-to-all-nodes, gpu-supported)]
+# available backends
+MLBENCH_BACKENDS = ["MPI", "GLOO", "NCCL"]
+
+MPI_COMMAND = "/.openmpi/bin/mpirun --mca btl_tcp_if_exclude docker0,lo"\
+              " -x KUBERNETES_SERVICE_HOST -x KUBERNETES_SERVICE_PORT "\
+              "-x LD_LIBRARY_PATH=/usr/local/nvidia/lib64 --host {hosts} "
+
+# available images. [("Name", "image", "command", gpu-supported)]
 MLBENCH_IMAGES = {
     "mlbench/pytorch-cifar10-resnet:latest": (
-        "PyTorch Cifar-10 ResNet-20 Open-MPI",
-        "/.openmpi/bin/mpirun --mca btl_tcp_if_exclude docker0,lo "
-        "-x KUBERNETES_SERVICE_HOST -x KUBERNETES_SERVICE_PORT "
-        "-x LD_LIBRARY_PATH=/usr/local/nvidia/lib64 --host {hosts}"
-        " /conda/bin/python /codes/main.py --run_id {run_id}",
-        False,
+        "PyTorch Cifar-10 ResNet-20",
+        "/conda/bin/python /codes/main.py --run_id {run_id} --rank {rank} --hosts {hosts} --backend {backend}",
         True,
     ),
     "mlbench/pytorch-cifar10-resnet-scaling:latest": (
-        "PyTorch Cifar-10 ResNet-20 Open-MPI (Scaling LR)",
-        "/.openmpi/bin/mpirun --mca btl_tcp_if_exclude docker0,lo "
-        "-x KUBERNETES_SERVICE_HOST -x KUBERNETES_SERVICE_PORT "
-        "-x LD_LIBRARY_PATH=/usr/local/nvidia/lib64 --host {hosts}"
-        " /conda/bin/python /codes/main.py --run_id {run_id}",
-        False,
+        "PyTorch Cifar-10 ResNet-20 (Scaling LR)",
+        "/conda/bin/python /codes/main.py --run_id {run_id} --rank {rank} --hosts {hosts} --backend {backend}",
         True,
     ),
-    "mlbench/pytorch-openmpi-epsilon-logistic-regression-all-reduce:latest": (
-        "PyTorch Linear Logistic Regression Open-MPI",
-        "/.openmpi/bin/mpirun --mca btl_tcp_if_exclude docker0,lo "
-        "-x KUBERNETES_SERVICE_HOST -x KUBERNETES_SERVICE_PORT "
-        "-x LD_LIBRARY_PATH=/usr/local/nvidia/lib64 --host {hosts}"
-        " /conda/bin/python /codes/main.py --run_id {run_id}",
-        False,
+    "mlbench/pytorch-epsilon-logistic-regression-all-reduce:latest": (
+        "PyTorch Linear Logistic Regression",
+        "/conda/bin/python /codes/main.py --run_id {run_id} --rank {rank} --hosts {hosts} --backend {backend}",
         True,
     ),
     "mlbench/tensorflow-cifar10-resnet:latest": (
-        "Tensorflow Cifar-10 ResNet-20 Open-MPI",
-        "/.openmpi/bin/mpirun --mca btl_tcp_if_exclude docker0,lo "
-        "-x KUBERNETES_SERVICE_HOST -x KUBERNETES_SERVICE_PORT "
-        "-x LD_LIBRARY_PATH=/usr/local/nvidia/lib64 --host {hosts} "
-        "/conda/bin/python /codes/main.py --run_id {run_id} --hosts {hosts}",
-        False,
+        "Tensorflow Cifar-10 ResNet-20",
+        "/conda/bin/python /codes/main.py --run_id {run_id} --rank {rank} --hosts {hosts} --backend {backend}",
         False,
     ),
 }

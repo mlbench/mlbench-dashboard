@@ -50,9 +50,10 @@ class ModelRunTests(APITestCase):
                     "image_name": "custom_image",
                     "custom_image_name": "mlbench/mlbench_worker",
                     "custom_image_command": "sleep",
-                    "custom_image_all_nodes": True,
+                    "run_all_nodes": True,
                     "light_target": True,
                     "gpu_enabled": "false",
+                    "backend": "MPI",
                 },
                 format="json",
             )

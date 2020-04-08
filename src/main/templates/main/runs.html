@@ -46,13 +46,33 @@
                     <label for="custom-image-name" class="col-form-label">Image:</label>
                     <input class="form-control" id="custom-image-name">
                     <label for="custom-image-command" class="col-form-label">Command:</label>
-                    <input class="form-control" id="custom-image-command" data-toggle="tooltip" data-placement="right" title="Available Placeholders:<br><ul><li><b>&#123;hosts&#125;</b> Comma separated list of worker hostnames</li><li><b>&#123;run_id&#125;</b> ID (int) of a run</li><li><b>&#123;rank&#125;</b> The rank of the individual node the command is run on</li></ul>" data-html="true">
-                    <label for="custom-image-all-nodes" class="col-form-label">Run on all nodes:</label>
-                    <input type="checkbox" class="form-control" id="custom-image-all-nodes" data-toggle="tooltip" data-placement="right" title="Whether to run the command on all workers or only on the first one (e.g. for openmpi)">
+                    <input class="form-control" id="custom-image-command" data-toggle="tooltip" data-placement="right" title="Available Placeholders:<br><ul><li><b>&#123;hosts&#125;</b> Comma separated list of worker hostnames</li><li><b>&#123;run_id&#125;</b> ID (int) of a run</li><li><b>&#123;rank&#125;</b> The rank of the individual node the command is run on</li><li><b>&#123;backend&#125;</b> The communication backend to use</li></ul>" data-html="true">
+                    <!--<label for="custom-image-all-nodes" class="col-form-label">Run on all nodes:</label>-->
+                    <!--<input type="checkbox" class="form-control" id="custom-image-all-nodes" data-toggle="tooltip" data-placement="right" title="Whether to run the command on all workers or only on the first one (e.g. for openmpi)">-->
+                </div>
+                <div class="form-group">
+                    <label for="backend" class="col-form-label">Backend:</label>
+                    <select class="form-control" id="backend" required>
+                        {% for b in backends%}
+                            <option value="{{b}}">{{b}}</option>
+                        {% endfor %}
+                        <option value="custom_backend">Custom Backend</option>
+                      </select>
+                    <div class="invalid-feedback">
+                        Please select a backend.
+                    </div>
+                </div>
+                <div class="form-group collapse" id="custom-backend-collapse">
+                    <label for="custom-backend" class="col-form-label">Backend:</label>
+                    <input class="form-control" id="custom-backend" data-toggle="tooltip" data-placement="right" title="Custom backend to use, will be passed through <b>&#123;backend&#125;</b> argument in the command">
                 </div>
                 <div class="form-group" id="enable-gpu">
                     <label for="gpu-enabled" class="col-form-label">GPU:</label><br>
                     <input type="checkbox" class="form-control" id="gpu-enabled" data-toggle="tooltip" data-placement="right" title="Whether to train on GPU or not">
+                </div>
+                <div class="form-group" id="all-nodes">
+                    <label for="run-all-nodes" class="col-form-label">Run on all nodes:</label>
+                    <input type="checkbox" class="form-control" id="run-all-nodes" data-toggle="tooltip" data-placement="right" title="Whether to run the command on all workers or only on the first one (e.g. for openmpi)">
                 </div>
                 <div class="form-group" id="target-type">
                     <label for="light-target" class="col-form-label">Light Target Goal:</label><br>
@@ -92,7 +112,7 @@
         var image_settings = {
             {% for image, details in images.items%}
                 "{{image}}": {
-                    "gpu": {{details.3|yesno:"true,false" }}
+                    "gpu": {{details.2|yesno:"true,false" }}
                 },
             {% endfor %}
         };
@@ -101,7 +121,10 @@
         $('#add-run-modal').on('show.bs.modal', function (e) {
             //$('#run-name').val("Run " + new Date().toString());
             $("#custom-image-collapse").collapse("hide");
+            $("#custom-backend-collapse").collapse("hide")
+            $("#all-nodes").hide();
             $("#image-name").val($("#image-name option:first").val());
+            $("#backend").val($("#backend option:first").val());
         });
 
         $('.collapse').collapse();
@@ -124,6 +147,19 @@
                     $("#enable-gpu").hide();
                 }
             }
+        });
+
+        $("#backend").change(function(){
+           var backend_name = $("#backend").val();
+           if (backend_name == "custom_backend") {
+               $("#custom-backend-collapse").collapse("show");
+               $("#all-nodes").show();
+               $("#custom-backend").prop("required", true);
+           }else{
+               $("#custom-backend-collapse").collapse("hide");
+               $("#all-nodes").hide();
+               $("#custom-backend").prop("required", false);
+           }
         });
 
         // sliders
@@ -163,9 +199,11 @@
                     num_cpus: $('#num-cpus').val(),
                     max_memory: $('#max-memory').val(),
                     image_name: $('#image-name').val(),
+                    backend: $("#backend").val(),
                     custom_image_name: $('#custom-image-name').val(),
                     custom_image_command: $("#custom-image-command").val(),
-                    custom_image_all_nodes: $("#custom-image-all-nodes").is(':checked'),
+                    custom_backend: $("#custom-backend").val(),
+                    run_all_nodes: $("#run-all-nodes").is(':checked'),
                     gpu_enabled: $("#gpu-enabled").is(':checked'),
                     light_target: $("#light-target").is(':checked'),
                 },

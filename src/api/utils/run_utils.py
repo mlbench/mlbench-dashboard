@@ -8,6 +8,7 @@ from copy import deepcopy
 from time import sleep
 import traceback
 import websocket
+from master.settings import MPI_COMMAND
 
 MAX_POD_RETRIES = 20
 
@@ -376,10 +377,15 @@ def run_model_job(model_run):
 
         # Use `question 22 <https://www.open-mpi.org/faq/?category=running#mpirun-hostfile`_ to add slots # noqa: E501
         exec_command = model_run.command.format(
-            hosts=",".join(hosts_with_slots), run_id=model_run.id, rank=0
+            hosts=",".join(hosts_with_slots), run_id=model_run.id, rank=0, backend=model_run.backend,
         )
 
+        # Add mpirun to run on mpi
+        cmd_prepend = ""
         cmd_append = ""
+
+        if model_run.backend == "mpi":
+            cmd_prepend = MPI_COMMAND.format(hosts=",".join(hosts_with_slots))
 
         if model_run.gpu_enabled:
             cmd_append += " --gpu"
@@ -387,7 +393,7 @@ def run_model_job(model_run):
         if model_run.light_target:
             cmd_append += " --light"
 
-        job.meta["command"] = exec_command + cmd_append
+        job.meta["command"] = cmd_prepend + exec_command + cmd_append
 
         job.meta["master_name"] = ret.items[0].metadata.name
         job.save()
@@ -397,8 +403,9 @@ def run_model_job(model_run):
         for i, n in enumerate(ret.items):
             name = n.metadata.name
             cmd = (
-                model_run.command.format(
-                    hosts=",".join(hosts_with_slots), run_id=model_run.id, rank=i
+                cmd_prepend
+                + model_run.command.format(
+                    hosts=",".join(hosts_with_slots), run_id=model_run.id, rank=i, backend=model_run.backend,
                 )
                 + cmd_append
             ).split(" ")

@@ -12,7 +12,11 @@ class ModelRun(models.Model):
     STARTED = "started"
     FAILED = "failed"
     FINISHED = "finished"
+    MPI = "mpi"
+    NCCL = "nccl"
+    GLOO = "gloo"
     STATE_CHOICES = [(STARTED, STARTED), (FAILED, FAILED), (FINISHED, FINISHED)]
+    BACKENDS = [(MPI, MPI), (NCCL, NCCL), (GLOO, GLOO)]
 
     name = models.CharField(max_length=100)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -25,6 +29,7 @@ class ModelRun(models.Model):
 
     image = models.CharField(max_length=100, default="mlbench/mlbench_worker")
     command = models.CharField(max_length=1000, default="")
+    backend = models.CharField(max_length=20, choices=BACKENDS, default=MPI)
     run_on_all_nodes = models.BooleanField(default=False)
     gpu_enabled = models.BooleanField(default=False)
     light_target = models.BooleanField(default=False)

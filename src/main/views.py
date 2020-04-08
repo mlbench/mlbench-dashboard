@@ -1,12 +1,12 @@
-from django.shortcuts import render
+import math
+import os
+
 import django_rq
-from rq.job import Job
 from django.conf import settings
+from django.shortcuts import render
+from rq.job import Job
 
 from api.models import ModelRun, KubePod
-
-import os
-import math
 
 
 # Create your views here.
@@ -50,6 +50,7 @@ def runs(request):
             "max_cpus": max_cpu,
             "max_memory": 30000,
             "images": settings.MLBENCH_IMAGES,
+            "backends": settings.MLBENCH_BACKENDS,
         },
     )
 

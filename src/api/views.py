@@ -1,26 +1,27 @@
-from api.models import KubePod, KubeMetric, ModelRun
-from api.serializers import KubePodSerializer, ModelRunSerializer, KubeMetricsSerializer
-from api.utils.utils import secure_filename
-from api.utils.run_utils import delete_statefulset, delete_service
-
-from rest_framework.viewsets import ViewSet
-from rest_framework.response import Response
-from rest_framework import status
-import django_rq
-from rq.job import Job
-from django.utils.dateparse import parse_datetime
-from django.db.models import Q
-from django.core.serializers.json import DjangoJSONEncoder
-from django.core.exceptions import ObjectDoesNotExist
-from django.conf import settings
-
-from itertools import groupby
-from datetime import datetime
-import pytz
-import zipfile
 import io
 import json
+import os
+import zipfile
+from datetime import datetime
+from itertools import groupby
 from math import ceil
+
+import django_rq
+import pytz
+from django.conf import settings
+from django.core.exceptions import ObjectDoesNotExist
+from django.core.serializers.json import DjangoJSONEncoder
+from django.db.models import Q
+from django.utils.dateparse import parse_datetime
+from rest_framework import status
+from rest_framework.response import Response
+from rest_framework.viewsets import ViewSet
+from rq.job import Job
+
+from api.models import KubePod, KubeMetric, ModelRun
+from api.serializers import KubePodSerializer, ModelRunSerializer, KubeMetricsSerializer
+from api.utils.run_utils import delete_statefulset, delete_service
+from api.utils.utils import secure_filename
 
 
 class KubePodView(ViewSet):
@@ -51,8 +52,8 @@ class KubeMetricsView(ViewSet):
             temp_filter = q & Q(name=name)
             filtered_metrics = (
                 metrics.filter(temp_filter)
-                .order_by("date")
-                .values("date", "value", "cumulative")
+                    .order_by("date")
+                    .values("date", "value", "cumulative")
             )
 
             metric_count = filtered_metrics.count()
@@ -102,8 +103,8 @@ class KubeMetricsView(ViewSet):
             temp_filter = q & Q(name=name)
             filtered_metrics = (
                 metrics.filter(temp_filter)
-                .order_by("date")
-                .values("date", "value", "cumulative")
+                    .order_by("date")
+                    .values("date", "value", "cumulative")
             )
 
             metric_count = filtered_metrics.count()
@@ -169,9 +170,9 @@ class KubeMetricsView(ViewSet):
                     for e in sorted(g[1], key=lambda x: x.date)
                 ]
                 for g in groupby(
-                    sorted(pod.metrics.all(), key=lambda m: m.name),
-                    key=lambda m: m.name,
-                )
+                sorted(pod.metrics.all(), key=lambda m: m.name),
+                key=lambda m: m.name,
+            )
             }
             for pod in KubePod.objects.all()
         }
@@ -183,9 +184,9 @@ class KubeMetricsView(ViewSet):
                     for e in sorted(g[1], key=lambda x: x.date)
                 ]
                 for g in groupby(
-                    sorted(run.metrics.all(), key=lambda m: m.name),
-                    key=lambda m: m.name,
-                )
+                sorted(run.metrics.all(), key=lambda m: m.name),
+                key=lambda m: m.name,
+            )
             }
             for run in ModelRun.objects.all()
         }
@@ -249,7 +250,7 @@ class KubeMetricsView(ViewSet):
         result_file = io.BytesIO()
 
         with zipfile.ZipFile(
-            result_file, mode="w", compression=zipfile.ZIP_DEFLATED
+                result_file, mode="w", compression=zipfile.ZIP_DEFLATED
         ) as zf:
 
             if metric_type == "run":
@@ -430,23 +431,24 @@ class ModelRunView(ViewSet):
         d = request.data
 
         image = d["image_name"]
-
+        backend = d["backend"].lower()
         gpu = False
 
         if image == "custom_image":
             image = d["custom_image_name"]
             command = d["custom_image_command"]
-            run_all = d["custom_image_all_nodes"]
             gpu = d["gpu_enabled"] == "true"
-            if isinstance(run_all, str):
-                run_all = run_all == "true"
         else:
             entry = settings.MLBENCH_IMAGES[image]
             command = entry[1]
-            run_all = entry[2]
-
-            if entry[3]:
+            if entry[2]:
                 gpu = d["gpu_enabled"] == "true"
+
+        if backend == "custom_backend":
+            backend = d["custom_backend"]
+            run_all = d["run_all_nodes"] == "true"
+        else:
+            run_all = backend != "mpi"
 
         cpu = "{}m".format(float(d["num_cpus"]) * 1000)
 
@@ -456,6 +458,7 @@ class ModelRunView(ViewSet):
             cpu_limit=cpu,
             image=image,
             command=command,
+            backend=backend,
             run_on_all_nodes=run_all,
             gpu_enabled=gpu,
             light_target=d["light_target"] == "true",
