@@ -1,5 +1,6 @@
 import io
 import json
+import logging
 import os
 import zipfile
 from datetime import datetime
@@ -52,8 +53,8 @@ class KubeMetricsView(ViewSet):
             temp_filter = q & Q(name=name)
             filtered_metrics = (
                 metrics.filter(temp_filter)
-                    .order_by("date")
-                    .values("date", "value", "cumulative")
+                .order_by("date")
+                .values("date", "value", "cumulative")
             )
 
             metric_count = filtered_metrics.count()
@@ -103,8 +104,8 @@ class KubeMetricsView(ViewSet):
             temp_filter = q & Q(name=name)
             filtered_metrics = (
                 metrics.filter(temp_filter)
-                    .order_by("date")
-                    .values("date", "value", "cumulative")
+                .order_by("date")
+                .values("date", "value", "cumulative")
             )
 
             metric_count = filtered_metrics.count()
@@ -170,9 +171,9 @@ class KubeMetricsView(ViewSet):
                     for e in sorted(g[1], key=lambda x: x.date)
                 ]
                 for g in groupby(
-                sorted(pod.metrics.all(), key=lambda m: m.name),
-                key=lambda m: m.name,
-            )
+                    sorted(pod.metrics.all(), key=lambda m: m.name),
+                    key=lambda m: m.name,
+                )
             }
             for pod in KubePod.objects.all()
         }
@@ -184,9 +185,9 @@ class KubeMetricsView(ViewSet):
                     for e in sorted(g[1], key=lambda x: x.date)
                 ]
                 for g in groupby(
-                sorted(run.metrics.all(), key=lambda m: m.name),
-                key=lambda m: m.name,
-            )
+                    sorted(run.metrics.all(), key=lambda m: m.name),
+                    key=lambda m: m.name,
+                )
             }
             for run in ModelRun.objects.all()
         }
@@ -250,7 +251,7 @@ class KubeMetricsView(ViewSet):
         result_file = io.BytesIO()
 
         with zipfile.ZipFile(
-                result_file, mode="w", compression=zipfile.ZIP_DEFLATED
+            result_file, mode="w", compression=zipfile.ZIP_DEFLATED
         ) as zf:
 
             if metric_type == "run":
@@ -479,6 +480,7 @@ class ModelRunView(ViewSet):
         Keyword Arguments:
             pk {int} -- [the id of the run] (default: {None})
         """
+        logger = logging.getLogger("dashboard")
         run = ModelRun.objects.get(pk=pk)
 
         release_name = os.environ.get("MLBENCH_KUBE_RELEASENAME")
@@ -488,13 +490,13 @@ class ModelRunView(ViewSet):
         ).lower()
 
         if run is not None:
-            run.delete()
-
             try:
                 delete_statefulset(statefulset_name, ns)
                 delete_service(statefulset_name, ns)
-            except (BaseException, Exception):
-                pass
+            except (BaseException, Exception) as e:
+                logger.error("Couldn't delete run {}: {}".format(run.id, repr(e)))
+
+            run.delete()
 
         return Response(
             {"status": "Deleted", "message": "The run was deleted"},
