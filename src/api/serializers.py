@@ -19,6 +19,7 @@ class ModelRunSerializer(serializers.HyperlinkedModelSerializer):
             "state",
             "job_id",
             "job_metadata",
+            "num_workers",
         ]
 
 
