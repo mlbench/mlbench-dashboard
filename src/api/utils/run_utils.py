@@ -393,6 +393,9 @@ def run_model_job(model_run):
         if model_run.light_target:
             cmd_append += " --light"
 
+        if model_run.use_horovod:
+            cmd_append += "--horovod"
+
         job.meta["command"] = cmd_prepend + exec_command + cmd_append
 
         job.meta["master_name"] = ret.items[0].metadata.name
