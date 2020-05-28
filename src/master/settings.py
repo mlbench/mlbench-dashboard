@@ -176,4 +176,9 @@ MLBENCH_IMAGES = {
         "/conda/bin/python /codes/main.py --run_id {run_id} --rank {rank} --hosts {hosts} --backend {backend}",
         False,
     ),
+    "mlbench/pytorch-backend-benchmark:latest": (
+        "PyTorch Distributed Backend benchmarking",
+        "/conda/bin/python /codes/main.py --run_id {run_id} --rank {rank} --hosts {hosts} --backend {backend}",
+        True,
+    ),
 }
