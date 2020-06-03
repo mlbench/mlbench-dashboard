@@ -76,7 +76,11 @@
                 </div>
                 <div class="form-group" id="target-type">
                     <label for="light-target" class="col-form-label">Light Target Goal:</label><br>
-                    <input type="checkbox" class="form-control" id="light-target" data-toggle="tooltip" data-placement="right" title="Wether to run with full or light target metric goal">
+                    <input type="checkbox" class="form-control" id="light-target" data-toggle="tooltip" data-placement="right" title="Whether to run with full or light target metric goal">
+                </div>
+                <div class="form-group" id="horovod">
+                    <label for="use-horovod" class="col-form-label">Use horovod:</label><br>
+                    <input type="checkbox" class="form-control" id="use-horovod" data-toggle="tooltip" data-placement="right" title="Whether to use Horovod instead of Torch">
                 </div>
                 <div class="form-group">
                     <label for="num-workers" class="col-form-label">Number of Workers:</label><br>
@@ -125,6 +129,9 @@
             $("#all-nodes").hide();
             $("#image-name").val($("#image-name option:first").val());
             $("#backend").val($("#backend option:first").val());
+
+            $("#image-name").change();
+            $("#backend").change();
         });
 
         $('.collapse').collapse();
@@ -132,10 +139,10 @@
         $("#image-name").change(function(){
             var image_name = $("#image-name").val();
 
-            if(image_name == "custom_image"){
+            if(image_name == "custom_image") {
                 $("#custom-image-collapse").collapse("show");
-                $("#custom-image-name").prop('required',true);
-                $("#custom-image-command").prop('required',true);
+                $("#custom-image-name").prop('required', true);
+                $("#custom-image-command").prop('required', true);
             }else{
                 $("#custom-image-collapse").collapse("hide");
                 $("#custom-image-name").prop('required',false);
@@ -146,7 +153,14 @@
                 }else{
                     $("#enable-gpu").hide();
                 }
+
+                if(image_name == "mlbench/pytorch-backend-benchmark:latest"){
+                    $("#target-type").hide();
+                } else {
+                    $("#target-type").show();
+                }
             }
+            $("#backend").change();
         });
 
         $("#backend").change(function(){
@@ -159,6 +173,19 @@
                $("#custom-backend-collapse").collapse("hide");
                $("#all-nodes").hide();
                $("#custom-backend").prop("required", false);
+
+               var image_name = $("#image-name").val();
+               console.log(image_name)
+               if(image_name == "mlbench/pytorch-backend-benchmark:latest"){
+                   console.log(backend_name)
+                   if (backend_name == "MPI"){
+                       $("#horovod").show();
+                   } else {
+                       $("#horovod").hide();
+                   }
+               } else {
+                  $("#horovod").hide();
+               }
            }
         });
 
@@ -206,6 +233,7 @@
                     run_all_nodes: $("#run-all-nodes").is(':checked'),
                     gpu_enabled: $("#gpu-enabled").is(':checked'),
                     light_target: $("#light-target").is(':checked'),
+                    use_horovod: $("#use-horovod").is(':checked'),
                 },
                 function( data ) {
                     location.reload();

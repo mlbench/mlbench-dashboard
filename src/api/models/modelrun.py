@@ -33,6 +33,7 @@ class ModelRun(models.Model):
     run_on_all_nodes = models.BooleanField(default=False)
     gpu_enabled = models.BooleanField(default=False)
     light_target = models.BooleanField(default=False)
+    use_horovod = models.BooleanField(default=False)
 
     job_metadata = {}
 
