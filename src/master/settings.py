@@ -101,9 +101,9 @@ AUTH_PASSWORD_VALIDATORS = [
     {
         "NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator",  # noqa E501
     },
-    {"NAME": "django.contrib.auth.password_validation.MinimumLengthValidator", },
-    {"NAME": "django.contrib.auth.password_validation.CommonPasswordValidator", },
-    {"NAME": "django.contrib.auth.password_validation.NumericPasswordValidator", },
+    {"NAME": "django.contrib.auth.password_validation.MinimumLengthValidator",},
+    {"NAME": "django.contrib.auth.password_validation.CommonPasswordValidator",},
+    {"NAME": "django.contrib.auth.password_validation.NumericPasswordValidator",},
 ]
 
 # Internationalization
@@ -131,8 +131,8 @@ CONSTANCE_BACKEND = "constance.backends.database.DatabaseBackend"
 CONSTANCE_CONFIG = {"FIRST_TIME": (True, "Whether to execute first time setup wizard")}
 
 RQ_QUEUES = {
-    "default": {"HOST": "localhost", "PORT": 6379, "DB": 0, "DEFAULT_TIMEOUT": 360, },
-    "high": {"HOST": "localhost", "PORT": 6379, "DB": 0, "DEFAULT_TIMEOUT": 360, },
+    "default": {"HOST": "localhost", "PORT": 6379, "DB": 0, "DEFAULT_TIMEOUT": 360,},
+    "high": {"HOST": "localhost", "PORT": 6379, "DB": 0, "DEFAULT_TIMEOUT": 360,},
 }
 
 FIXTURE_DIRS = ("api/fixtures/",)
@@ -140,9 +140,11 @@ FIXTURE_DIRS = ("api/fixtures/",)
 # available backends
 MLBENCH_BACKENDS = ["MPI", "GLOO", "NCCL"]
 
-MPI_COMMAND = "/.openmpi/bin/mpirun --mca btl_tcp_if_exclude docker0,lo"\
-              " -x KUBERNETES_SERVICE_HOST -x KUBERNETES_SERVICE_PORT "\
-              "-x LD_LIBRARY_PATH=/usr/local/nvidia/lib64 --host {hosts} "
+MPI_COMMAND = (
+    "/.openmpi/bin/mpirun --mca btl_tcp_if_exclude docker0,lo"
+    " -x KUBERNETES_SERVICE_HOST -x KUBERNETES_SERVICE_PORT "
+    "-x LD_LIBRARY_PATH=/usr/local/nvidia/lib64 --host {hosts} "
+)
 
 # available images. [("Name", "image", "command", gpu-supported)]
 MLBENCH_IMAGES = {

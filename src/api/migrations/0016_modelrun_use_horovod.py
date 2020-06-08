@@ -6,13 +6,13 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('api', '0015_modelrun_backend'),
+        ("api", "0015_modelrun_backend"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='modelrun',
-            name='use_horovod',
+            model_name="modelrun",
+            name="use_horovod",
             field=models.BooleanField(default=False),
         ),
     ]

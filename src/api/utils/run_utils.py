@@ -377,7 +377,10 @@ def run_model_job(model_run):
 
         # Use `question 22 <https://www.open-mpi.org/faq/?category=running#mpirun-hostfile`_ to add slots # noqa: E501
         exec_command = model_run.command.format(
-            hosts=",".join(hosts_with_slots), run_id=model_run.id, rank=0, backend=model_run.backend,
+            hosts=",".join(hosts_with_slots),
+            run_id=model_run.id,
+            rank=0,
+            backend=model_run.backend,
         )
 
         # Add mpirun to run on mpi
@@ -408,7 +411,10 @@ def run_model_job(model_run):
             cmd = (
                 cmd_prepend
                 + model_run.command.format(
-                    hosts=",".join(hosts_with_slots), run_id=model_run.id, rank=i, backend=model_run.backend,
+                    hosts=",".join(hosts_with_slots),
+                    run_id=model_run.id,
+                    rank=i,
+                    backend=model_run.backend,
                 )
                 + cmd_append
             ).split(" ")

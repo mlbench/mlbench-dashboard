@@ -6,13 +6,17 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('api', '0014_auto_20191223_1348'),
+        ("api", "0014_auto_20191223_1348"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='modelrun',
-            name='backend',
-            field=models.CharField(choices=[('mpi', 'mpi'), ('nccl', 'nccl'), ('gloo', 'gloo')], default='mpi', max_length=20),
+            model_name="modelrun",
+            name="backend",
+            field=models.CharField(
+                choices=[("mpi", "mpi"), ("nccl", "nccl"), ("gloo", "gloo")],
+                default="mpi",
+                max_length=20,
+            ),
         ),
     ]

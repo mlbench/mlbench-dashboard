@@ -2,26 +2,23 @@
 env:
   global:
     - docker_repository=mlbench
+language: python
+python:
+  - "3.6"
+  - "3.7"
+# Command to install dependencies, e.g. pip install -r requirements.txt --use-mirrors
+install:
+  - pip install -U tox-travis
+
+# Command to run tests, e.g. python setup.py test
+script:
+  - tox
 jobs:
   include:
-    - stage: test
-      language: python
-      python:
-        - "3.6"
-        - "3.7"
-
-      # Command to install dependencies, e.g. pip install -r requirements.txt --use-mirrors
-      install:
-        - pip install -U tox-travis
-
-      # Command to run tests, e.g. python setup.py test
-      script:
-        - tox
-
     - stage: build docker
       language: bash
       sudo: required
-
+      python: "3.6"
       services:
         - docker
       install: true
@@ -32,6 +29,7 @@ jobs:
 
     - stage: deploy develop
       if: branch = develop
+      python: "3.6"
       language: bash
       services: docker
       before_install:
@@ -44,6 +42,7 @@ jobs:
 
     - stage: deploy
       if: branch = master
+      python: "3.6"
       language: bash
       services: docker
       before_install:
