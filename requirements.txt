@@ -7,7 +7,7 @@ pytest-black==0.3.9
 pre-commit
 tox==3.15.2
 coverage==4.5.1
-Sphinx==1.7.1
+Sphinx==3.1.1
 sphinxcontrib-httpdomain==1.7.0
 sphinx-rtd-theme==0.4.3
 
