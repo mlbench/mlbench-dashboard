@@ -1,5 +1,5 @@
 Django==2.2.13
-uwsgi==2.0.17
+uwsgi==2.0.19
 django-livesync==0.4
 django-constance==2.6.0
 django-picklefield==1.0.0
