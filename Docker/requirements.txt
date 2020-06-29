@@ -2,7 +2,7 @@ Django==2.2.13
 uwsgi==2.0.19.1
 django-livesync==0.4
 django-constance==2.6.0
-django-picklefield==1.0.0
+django-picklefield==3.0.1
 djangorestframework==3.10.3
 kubernetes==6.0.0
 redis==2.10.6

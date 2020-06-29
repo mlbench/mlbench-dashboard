@@ -18,7 +18,7 @@ pytest-django==3.8.0
 Django==2.2.13
 django-livesync==0.4
 django-constance==2.6.0
-django-picklefield==1.0.0
+django-picklefield==3.0.1
 djangorestframework==3.9.1
 kubernetes==7.0.0
 rq-scheduler==0.8.3
