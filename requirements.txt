@@ -21,7 +21,7 @@ django-constance==2.6.0
 django-picklefield==1.0.0
 djangorestframework==3.9.1
 kubernetes==7.0.0
-rq-scheduler==0.8.3
+rq-scheduler==0.10.0
 psycopg2==2.7.5
 pid==2.2.0
 -e git+https://github.com/istrategylabs/django-rq-scheduler.git@fa76c6ac71068c304aa14ab9df7b13a4b972132e#egg=django-rq-scheduler
