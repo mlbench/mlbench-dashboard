@@ -19,7 +19,7 @@ Django==2.2.13
 django-livesync==0.4
 django-constance==2.6.0
 django-picklefield==1.0.0
-djangorestframework==3.9.1
+djangorestframework==3.11.1
 kubernetes==7.0.0
 rq-scheduler==0.8.3
 psycopg2==2.7.5
