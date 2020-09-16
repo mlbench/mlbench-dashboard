@@ -1,65 +1,62 @@
-# Config file for automatic testing at travis-ci.org
+os: linux
+dist: xenial
 env:
   global:
     - docker_repository=mlbench
+
 jobs:
   include:
-    - stage: test
+    - stage: tests
       language: python
-      python:
-        - "3.6"
-        - "3.7"
+      python: 3.7
+      services: docker
 
-      # Command to install dependencies, e.g. pip install -r requirements.txt --use-mirrors
       install:
-        - pip install -U tox-travis
+        - pip install tox
 
-      # Command to run tests, e.g. python setup.py test
-      script:
-        - tox
+      name: "Black linting"
+      script: env TOXENV=black tox
+
+    - script: env TOXENV=isort tox
+      language: python
+      python: 3.7
+      name: "Isort linting"
+
+    - script: env TOXENV=py37 tox
+      language: python
+      python: 3.7
+      name: "Tests (Python 3.7) + coverage"
+      after_success:
+        - bash <(curl -s https://codecov.io/bash)
+
+    - script: env TOXENV=docs tox
+      language: python
+      python: 3.7
+      name: "Documentation"
 
     - stage: build docker
-      language: bash
-      sudo: required
-
-      services:
-        - docker
+      services: docker
+      language: shell
       install: true
-
+      name: "Build docker image (Branch)"
       before_script: echo "$DOCKER_PASSWORD" | docker login --username "$DOCKER_USERNAME" --password-stdin
       script:
         - docker build -f Docker/Dockerfile -t ${docker_repository}/mlbench_master:travis-ci-test .
 
     - stage: deploy develop
       if: branch = develop
-      language: bash
+      language: shell
       services: docker
-      before_install:
-        - echo "$DOCKER_PASSWORD" | docker login --username "$DOCKER_USERNAME" --password-stdin
+      name: "Build & deploy docker image (latest)"
       before_script:
+        - echo "$DOCKER_PASSWORD" | docker login --username "$DOCKER_USERNAME" --password-stdin
         - docker pull ${docker_repository}/mlbench_master:travis-ci-test
         - docker tag ${docker_repository}/mlbench_master:travis-ci-test ${docker_repository}/mlbench_master:develop
       script:
         - docker push ${docker_repository}/mlbench_master:develop
 
-    - stage: deploy
-      if: branch = master
-      language: bash
-      services: docker
-      before_install:
-        - export MASTER_VERSION=$(awk '$1 == "__version__" { print $3; exit }' src/__init__.py)
-        - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
-      before_script:
-        - docker pull ${docker_repository}/mlbench_master:travis-ci-test
-        - docker tag ${docker_repository}/mlbench_master:travis-ci-test ${docker_repository}/mlbench_master:latest
-        - docker tag ${docker_repository}/mlbench_master:travis-ci-test ${docker_repository}/mlbench_master:${MASTER_VERSION}
-      script:
-        - docker push ${docker_repository}/mlbench_master:latest
-        - docker push ${docker_repository}/mlbench_master:${MASTER_VERSION}
-
-
 stages:
-  - test
+  - tests
+  - docs
   - build docker
   - deploy develop
-  - deploy

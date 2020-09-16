@@ -3,5 +3,6 @@ target-version = ['py36', 'py37']
 exclude = '''
 /(
     django-rq-scheduler
+    | src/api/migrations
 )/
 '''

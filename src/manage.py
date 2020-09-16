@@ -4,6 +4,11 @@ import sys
 
 if __name__ == "__main__":
     os.environ.setdefault("DJANGO_SETTINGS_MODULE", "master.settings")
+
+    if sys.argv[1] == "test":
+        os.environ.setdefault("MLBENCH_KUBE_RELEASENAME", "release")
+        os.environ.setdefault("MLBENCH_MAX_WORKERS", "2")
+        os.environ.setdefault("MLBENCH_NAMESPACE", "default")
     try:
         from django.core.management import execute_from_command_line
     except ImportError as exc:

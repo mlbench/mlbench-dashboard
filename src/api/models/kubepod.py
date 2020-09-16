@@ -1,6 +1,6 @@
-from api.models import ModelRun
-
 from django.db import models
+
+from api.models.modelrun import ModelRun
 
 
 class KubePod(models.Model):

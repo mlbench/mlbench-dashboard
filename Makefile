@@ -42,25 +42,21 @@ clean-test: ## remove test and coverage artifacts
 	rm -f .coverage
 	rm -fr htmlcov/
 	rm -fr .pytest_cache
+	rm -fr .kube/
+	rm -fr .pytest-kind/
 
-lint: ## check style with flake8
-	flake8 --max-line-length=120 src tests
+lint: ## check style with black and isort
+	black src/
+	isort src/
 
-test: ## run tests quickly with the default Python
-	py.test
+test: ## run django tests
+	python src/manage.py test
 
 test-all: ## run tests on every Python version with tox
 	tox
 
 
-
 docs: ## generate Sphinx HTML documentation, including API docs
-	# rm -f docs/mlbench.rst
-	# rm -f docs/modules.rst
-	# sphinx-apidoc -o docs/ mlbench
-	# rm -rf docs/refimpls/*
-	# sphinx-apidoc -o docs/refimpls mlbench/refimpls/pytorch
-	# echo "   refimpls" >> docs/modules.rst
 	$(MAKE) -C docs clean
 	$(MAKE) -C docs html
 	$(BROWSER) docs/_build/html/index.html

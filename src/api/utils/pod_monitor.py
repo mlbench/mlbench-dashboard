@@ -1,62 +1,89 @@
-from kubernetes import client, config
-from django_rq import job
-from pid import PidFile, PidFileError
-from django.db.models import Max
-
-import os
 import json
-import urllib
-import pytz
 import logging
+import os
+import urllib
 from datetime import datetime
+
+import pytz
+from django.db import transaction
+from django.db.models import Max
+from django_rq import job
+from kubernetes import client, config
+from pid import PidFile, PidFileError
+
+from api.models.kubepod import KubePod
+
+
+def _check_and_create_new_pods():
+    """Checks the cluster for pods and updates DB accordingly"""
+    # Get cluster config and client API
+    config.load_incluster_config()
+    v1 = client.CoreV1Api()
+
+    release_name = os.environ.get("MLBENCH_KUBE_RELEASENAME")
+    ns = os.environ.get("MLBENCH_NAMESPACE")
+
+    ret = v1.list_namespaced_pod(
+        ns,
+        label_selector="component=worker,app=mlbench,release={}".format(release_name),
+    )
+    all_pods = list(KubePod.objects.all().values_list("name"))
+
+    if len(ret.items) == 0:
+        return
+
+    with transaction.atomic():
+        for i in ret.items:
+            if KubePod.objects.filter(name=i.metadata.name).count() == 0:
+                ip = i.status.pod_ip
+                if ip is None:
+                    ip = ""
+
+                pod = KubePod(
+                    name=i.metadata.name,
+                    labels=i.metadata.labels,
+                    phase=i.status.phase,
+                    ip=ip,
+                    node_name=i.spec.node_name,
+                )
+                pod.save()
+            if i.metadata.name in all_pods:
+                all_pods.remove(i.metadata.name)
+
+    KubePod.objects.filter(name__in=all_pods).delete()
+
+
+def _check_and_update_pod_phase():
+    config.load_incluster_config()
+    v1 = client.CoreV1Api()
+
+    ns = os.environ.get("MLBENCH_NAMESPACE")
+    # Read all pods
+    pods = KubePod.objects.all()
+
+    for pod in pods:
+        ret = v1.read_namespaced_pod(name=pod.name, namespace=ns)
+        phase = ret.status.phase
+        node_name = ret.spec.node_name
+
+        if phase != pod.phase:
+            pod.phase = phase
+            pod.save()
+        if pod.node_name != node_name:
+            pod.node_name = node_name
+            pod.save()
 
 
 @job
 def check_new_pods():
-    """Background Task to look for new pods available in cluster
+    """Background task to look for new pods available in cluster.
+    Creates corresponding `KubePod` objects in db.
     """
-
-    from api.models.kubepod import KubePod
 
     try:
         with PidFile("new_pods") as p:
             print(p.pidname)
-            config.load_incluster_config()
-            v1 = client.CoreV1Api()
-
-            release_name = os.environ.get("MLBENCH_KUBE_RELEASENAME")
-            ns = os.environ.get("MLBENCH_NAMESPACE")
-
-            ret = v1.list_namespaced_pod(
-                ns,
-                label_selector="component=worker,app=mlbench,release={}".format(
-                    release_name
-                ),
-            )
-
-            all_pods = list(KubePod.objects.all().values_list("name"))
-
-            if len(ret.items) == 0:
-                return
-
-            for i in ret.items:
-                if KubePod.objects.filter(name=i.metadata.name).count() == 0:
-                    ip = i.status.pod_ip
-                    if ip is None:
-                        ip = ""
-
-                    pod = KubePod(
-                        name=i.metadata.name,
-                        labels=i.metadata.labels,
-                        phase=i.status.phase,
-                        ip=ip,
-                        node_name=i.spec.node_name,
-                    )
-                    pod.save()
-                if i.metadata.name in all_pods:
-                    all_pods.remove(i.metadata.name)
-
-            KubePod.objects.filter(name__in=all_pods).delete()
+            _check_and_create_new_pods()
 
     except PidFileError:
         return
@@ -64,33 +91,14 @@ def check_new_pods():
 
 @job
 def check_pod_status():
-    """Background Task to update status/phase of known pods
-    """
+    """Background Task to update status/phase of known pods"""
 
     from api.models.kubepod import KubePod
 
     try:
         with PidFile("pod_status") as p:
             print(p.pidname)
-
-            ns = os.environ.get("MLBENCH_NAMESPACE")
-
-            config.load_incluster_config()
-            v1 = client.CoreV1Api()
-
-            pods = pods = KubePod.objects.all()
-
-            for pod in pods:
-                ret = v1.read_namespaced_pod(pod.name, ns)
-                phase = ret.status.phase
-                node_name = ret.spec.node_name
-
-                if phase != pod.phase:
-                    pod.phase = phase
-                    pod.save()
-                if pod.node_name != node_name:
-                    pod.node_name = node_name
-                    pod.save()
+            _check_and_update_pod_phase()
 
     except PidFileError:
         return
@@ -98,8 +106,7 @@ def check_pod_status():
 
 @job
 def check_pod_metrics():
-    """Background task to get metrics (cpu/memory etc.) of known pods
-    """
+    """Background task to get metrics (cpu/memory etc.) of known pods"""
     logger = logging.getLogger("rq.worker")
 
     from api.models.kubemetric import KubeMetric
