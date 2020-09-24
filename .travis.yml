@@ -4,6 +4,9 @@ env:
   global:
     - docker_repository=mlbench
 
+install:
+  - pip install tox
+
 jobs:
   include:
     - stage: tests
@@ -11,8 +14,6 @@ jobs:
       python: 3.7
       services: docker
 
-      install:
-        - pip install tox
 
       name: "Black linting"
       script: env TOXENV=black tox

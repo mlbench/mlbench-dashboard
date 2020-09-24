@@ -11,6 +11,10 @@ https://docs.djangoproject.com/en/2.0/ref/settings/
 """
 
 import os
+import sys
+
+import django_rq.queues
+from fakeredis import FakeRedis, FakeStrictRedis
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -82,6 +86,9 @@ DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.sqlite3",
         "NAME": os.path.join(BASE_DIR, "db.sqlite3"),
+        "TEST": {
+            "NAME": "testdb.sqlite3",
+        },
     }
 }
 
@@ -136,20 +143,39 @@ CONSTANCE_BACKEND = "constance.backends.database.DatabaseBackend"
 
 CONSTANCE_CONFIG = {"FIRST_TIME": (True, "Whether to execute first time setup wizard")}
 
-RQ_QUEUES = {
-    "default": {
-        "HOST": "localhost",
-        "PORT": 6379,
-        "DB": 0,
-        "DEFAULT_TIMEOUT": 360,
-    },
-    "high": {
-        "HOST": "localhost",
-        "PORT": 6379,
-        "DB": 0,
-        "DEFAULT_TIMEOUT": 360,
-    },
-}
+if "test" in sys.argv:
+    RQ_QUEUES = {
+        "default": {
+            "HOST": "localhost",
+            "PORT": 6379,
+            "DB": 0,
+            "ASYNC": False,
+        },
+    }
+    RQ_REDIS_ENABLED = False
+else:
+    RQ_QUEUES = {
+        "default": {
+            "HOST": "localhost",
+            "PORT": 6379,
+            "DB": 0,
+            "DEFAULT_TIMEOUT": 360,
+        },
+        "high": {
+            "HOST": "localhost",
+            "PORT": 6379,
+            "DB": 0,
+            "DEFAULT_TIMEOUT": 360,
+        },
+    }
+
+    RQ_REDIS_ENABLED = True
+
+
+if not RQ_REDIS_ENABLED:
+    django_rq.queues.get_redis_connection = (
+        lambda _, strict: FakeStrictRedis() if strict else FakeRedis()
+    )
 
 FIXTURE_DIRS = ("api/fixtures/",)
 

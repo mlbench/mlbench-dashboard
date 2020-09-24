@@ -240,14 +240,14 @@ def delete_statefulset(statefulset_name, namespace, grace_period_seconds=5):
         namespace (str): Namespace on which stateful set was deployed
         grace_period_seconds (int): Grace period for deletion
     """
-    kube_api = client.AppsV1beta1Api()
+    kube_api = client.AppsV1beta2Api()
 
     kube_api.delete_namespaced_stateful_set(
         statefulset_name,
         namespace,
-        body=client.V1DeleteOptions(),
-        propagation_policy="Foreground",
+        pretty=True,
         grace_period_seconds=grace_period_seconds,
+        propagation_policy="Foreground",
     )
 
 
@@ -261,7 +261,11 @@ def delete_service(statefulset_name, namespace):
     kube_api = client.CoreV1Api()
 
     kube_api.delete_namespaced_service(
-        statefulset_name, namespace, body=client.V1DeleteOptions()
+        statefulset_name,
+        namespace,
+        body=client.V1DeleteOptions(
+            propagation_policy="Foreground",
+        ),
     )
 
 

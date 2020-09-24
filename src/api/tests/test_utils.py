@@ -1,13 +1,13 @@
 import os
 import tempfile
-import unittest
+import threading
 from time import sleep
-from unittest import TestCase
 from unittest.mock import MagicMock, patch
 
 import docker
+from django.test import TestCase
 from kubernetes import client, config
-from pytest_kind import KindCluster
+from pytest_kind import KindCluster, cluster
 
 from api.models import KubePod, ModelRun
 from api.utils.pod_monitor import (
@@ -19,12 +19,12 @@ from api.utils.run_utils import (
     create_statefulset,
     delete_service,
     delete_statefulset,
+    run_model_job,
 )
 
-# For tests to run sequentially
-unittest.TestLoader.sortTestMethodsUsing = None
-
 # Kubernetes 1.15
+KUBERNETES_VERSION = "v1.15.12"
+cluster.KUBECTL_VERSION = KUBERNETES_VERSION
 KIND_NODE_IMAGE = "kindest/node:v1.15.12@sha256:d9b939055c1e852fe3d86955ee24976cab46cba518abcb8b13ba70917e6547a6"
 WORKER_TEMPLATE = """
 - role: worker
@@ -57,7 +57,6 @@ REG_PORT = "5000"
 TEST_IMAGE = "localhost:5000/mlbench_worker:latest"
 
 RUN_NAME = "Run{}"
-SUFFIX = "testrun"
 
 
 class PodMonitorTests(TestCase):
@@ -235,7 +234,6 @@ class RunUtilsTests(TestCase):
                 f.write(kind_config)
 
             cls.cluster.create(config_file=kind_config_file_location)
-        cls.cluster.ensure_kubectl()
 
         kube_config = str(cls.cluster.kubeconfig_path.absolute())
         config.load_kube_config(kube_config)
@@ -281,7 +279,7 @@ class RunUtilsTests(TestCase):
         cls.disconnect_kind_from_registry()
         cls.cluster.delete()
 
-    def test_create_statefulset(self):
+    def _test_create_statefulset(self):
         """Tests the creation of a stateful set"""
         run = ModelRun(
             name=RUN_NAME.format(1),
@@ -296,10 +294,18 @@ class RunUtilsTests(TestCase):
         )
 
         # Create stateful set
-        create_statefulset(run, SUFFIX, os.environ.get("MLBENCH_NAMESPACE"))
+        create_statefulset(
+            run,
+            os.getenv("MLBENCH_KUBE_RELEASENAME"),
+            os.environ.get("MLBENCH_NAMESPACE"),
+        )
 
+        # Wait for creation
+        sleep(10)
         # Check creation
-        stateful_set_name = "{1}-mlbench-worker-{0}".format(SUFFIX, run.name).lower()
+        stateful_set_name = "{1}-mlbench-worker-{0}".format(
+            os.getenv("MLBENCH_KUBE_RELEASENAME"), run.name
+        ).lower()
         kube_api = client.AppsV1beta2Api()
         stateful_sets = kube_api.list_namespaced_stateful_set(
             os.environ.get("MLBENCH_NAMESPACE")
@@ -320,30 +326,39 @@ class RunUtilsTests(TestCase):
         container = containers[0]
         self.assertEqual(container.image, TEST_IMAGE)
 
-    def test_delete_statefulset(self):
+        core = client.CoreV1Api()
+        pods = core.list_namespaced_pod(os.environ.get("MLBENCH_NAMESPACE"))
+        self.assertEqual(len(pods.items), 1)
+
+    def _test_delete_statefulset(self):
         """Tests deletion of stateful set"""
         run_name = RUN_NAME.format(1)
-        stateful_set_name = "{1}-mlbench-worker-{0}".format(SUFFIX, run_name).lower()
+        stateful_set_name = "{1}-mlbench-worker-{0}".format(
+            os.getenv("MLBENCH_KUBE_RELEASENAME"), run_name
+        ).lower()
         delete_statefulset(
             stateful_set_name,
             os.environ.get("MLBENCH_NAMESPACE"),
             grace_period_seconds=0,
         )
-
         # Wait for stateful set to delete
-        sleep(1)
+        sleep(30)
         kube_api = client.AppsV1beta2Api()
+        core = client.CoreV1Api()
         stateful_sets = kube_api.list_namespaced_stateful_set(
             os.environ.get("MLBENCH_NAMESPACE")
         )
 
-        items = stateful_sets.items
-        self.assertEqual(len(items), 0)
+        pods = core.list_namespaced_pod(os.environ.get("MLBENCH_NAMESPACE"))
+        self.assertEqual(len(stateful_sets.items), 0)
+        self.assertEqual(len(pods.items), 0)
 
-    def test_delete_service(self):
+    def _test_delete_service(self):
         """Tests deletion of service"""
         run_name = RUN_NAME.format(1)
-        stateful_set_name = "{1}-mlbench-worker-{0}".format(SUFFIX, run_name).lower()
+        stateful_set_name = "{1}-mlbench-worker-{0}".format(
+            os.getenv("MLBENCH_KUBE_RELEASENAME"), run_name
+        ).lower()
         delete_service(stateful_set_name, os.environ.get("MLBENCH_NAMESPACE"))
 
         sleep(1)
@@ -353,13 +368,19 @@ class RunUtilsTests(TestCase):
 
         self.assertFalse(stateful_set_name in service_names)
 
+    def test_statefulset_and_service(self):
+        self._test_create_statefulset()
+        self._test_delete_statefulset()
+        self._test_delete_service()
+
+    @patch.dict("os.environ", {"MLBENCH_MAX_WORKERS": "8"})
     def test_check_available_nodes(self):
         """Tests check available nodes"""
         total_workers = int(os.environ.get("MLBENCH_MAX_WORKERS", "1"))
 
         run_1 = ModelRun(
             name=RUN_NAME.format(1),
-            num_workers=1,
+            num_workers=4,
             cpu_limit=0.1,
             image=TEST_IMAGE,
             command="sleep",
@@ -374,7 +395,7 @@ class RunUtilsTests(TestCase):
 
         run_2 = ModelRun(
             name=RUN_NAME.format(2),
-            num_workers=1,
+            num_workers=4,
             cpu_limit=0.1,
             image=TEST_IMAGE,
             command="sleep",
@@ -390,10 +411,54 @@ class RunUtilsTests(TestCase):
             available, total_workers - run_1.num_workers >= run_2.num_workers
         )
 
-        run_2.num_workers = 2
-        run_2.save()
-
-        available = check_nodes_available_for_execution(run_2)
-        self.assertEqual(
-            available, total_workers - run_1.num_workers >= run_2.num_workers
+        run_3 = ModelRun(
+            name=RUN_NAME.format(3),
+            num_workers=1,
+            cpu_limit=0.1,
+            image=TEST_IMAGE,
+            command="sleep",
+            backend="gloo",
+            run_on_all_nodes=True,
+            gpu_enabled=False,
+            light_target=False,
         )
+
+        available = check_nodes_available_for_execution(run_3)
+        self.assertEqual(
+            available,
+            total_workers - run_1.num_workers - run_2.num_workers >= run_3.num_workers,
+        )
+
+    # def test_run_model_job(self):
+    #     run = ModelRun(
+    #         name=RUN_NAME.format(4),
+    #         num_workers=1,
+    #         cpu_limit=0.1,
+    #         image=TEST_IMAGE,
+    #         command="python -c \"print(\"Goal Reached!\")",
+    #         backend="gloo",
+    #         run_on_all_nodes=True,
+    #         gpu_enabled=False,
+    #         light_target=False,
+    #     )
+    #
+    #     run.save()
+    #
+    #     with patch("kubernetes.config.load_incluster_config"):
+    #
+    #         max_reties = 20
+    #         def _check_nodes():
+    #             retries = 0
+    #             while retries <= max_reties:
+    #                 try:
+    #                     _check_and_create_new_pods()
+    #                 except Exception as e:
+    #                     print(e)
+    #                 retries += 1
+    #                 sleep(5)
+    #
+    #         thread = threading.Thread(target=_check_nodes)
+    #         thread.start()
+    #         run.start(run_model_job=run_model_job)
+    #         thread.join()
+    #     self.assertEqual(run.state, ModelRun.FINISHED)
