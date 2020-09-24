@@ -23,8 +23,6 @@ from api.utils.run_utils import (
 )
 
 # Kubernetes 1.15
-KUBERNETES_VERSION = "v1.15.12"
-cluster.KUBECTL_VERSION = KUBERNETES_VERSION
 KIND_NODE_IMAGE = "kindest/node:v1.15.12@sha256:d9b939055c1e852fe3d86955ee24976cab46cba518abcb8b13ba70917e6547a6"
 WORKER_TEMPLATE = """
 - role: worker
