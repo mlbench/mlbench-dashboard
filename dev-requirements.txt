@@ -1,0 +1,17 @@
+# Dev requirements
+isort==5.5.3
+black==20.8b1
+pre-commit==2.7.1
+bumpversion==0.6.0
+Sphinx==3.2.1
+sphinxcontrib-httpdomain==1.7.0
+sphinx-rtd-theme==0.5.0
+
+# Test requirements
+codecov==2.1.9
+coverage==5.3
+tox==3.20.0
+pytest==6.0.2
+pytest-runner==5.2
+pytest-django==3.10.0
+pytest-kind==20.5.3

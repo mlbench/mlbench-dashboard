@@ -1,4 +1,4 @@
-FROM python:3.6-alpine3.8
+FROM python:3.7-alpine3.12
 
 # Install postgres
 ENV PG_MAJOR 9.6
@@ -9,7 +9,7 @@ ENV PGDATA /var/lib/postgresql/data
 
 ENV LANG en_US.utf8
 
-RUN apk update && apk add build-base readline-dev openssl-dev zlib-dev libxml2-dev glib-lang wget gnupg ca-certificates libssl1.0 && \
+RUN apk update && apk add build-base readline-dev openssl-dev zlib-dev libxml2-dev glib-lang wget gnupg ca-certificates libssl1.1 && \
     gpg --keyserver ipv4.pool.sks-keyservers.net --recv-keys B42F6819007F00F88E364FD4036A9C25BF357DD4 && \
     gpg --list-keys --fingerprint --with-colons | sed -E -n -e 's/^fpr:::::::::([0-9A-F]+):$/\1:6:/p' | gpg --import-ownertrust && \
     wget -O /usr/local/bin/gosu "https://github.com/tianon/gosu/releases/download/1.7/gosu-amd64" && \
@@ -28,7 +28,7 @@ RUN apk update && apk add build-base readline-dev openssl-dev zlib-dev libxml2-d
 COPY ./Docker/setup-postgres.sh /
 
 # Copy in your requirements file
-ADD ./Docker/requirements.txt /requirements.txt
+ADD ./requirements.txt /requirements.txt
 
 # Install build deps, then run `pip install`, then remove unneeded build deps all in a single step. Correct the path to your production requirements file, if needed.
 RUN set -ex \
@@ -59,7 +59,7 @@ RUN set -ex \
             nginx \
             sqlite \
             supervisor \
-            redis=4.0.14-r0 \
+            redis=5.0.9-r0 \
             postgresql \
     && mkdir /data \
     && chown -R redis:redis /data\
