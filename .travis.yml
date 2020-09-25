@@ -43,11 +43,13 @@ jobs:
       before_script: echo "$DOCKER_PASSWORD" | docker login --username "$DOCKER_USERNAME" --password-stdin
       script:
         - docker build -f Docker/Dockerfile -t ${docker_repository}/mlbench_master:travis-ci-test .
+        - docker push ${docker_repository}/mlbench_master:travis-ci-test
 
     - stage: deploy develop
       if: branch = develop
       language: shell
       services: docker
+      install: true
       name: "Build & deploy docker image (latest)"
       before_script:
         - echo "$DOCKER_PASSWORD" | docker login --username "$DOCKER_USERNAME" --password-stdin

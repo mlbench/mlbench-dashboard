@@ -1,17 +1,21 @@
-# Runtime
-pip==20.1.1
+# Runtime requirements
 watchdog==0.10.3
+
+# Comment uwsgi when installing locally
+uwsgi==2.0.19.1
+redis==2.10.6
 
 
 docker==4.3.1
 Django==2.2.16
-django-rq-scheduler==1.1.3
+rq==0.12.0
+django-rq==1.2.0
+rq-scheduler==0.8.3
+-e git+https://github.com/istrategylabs/django-rq-scheduler.git@fa76c6ac71068c304aa14ab9df7b13a4b972132e#egg=django-rq-scheduler
 django-livesync==0.5
 django-constance==2.7.0
 django-picklefield==3.0.1
 djangorestframework==3.11.1
 kubernetes==11.0.0
-rq-scheduler==0.10.0
 psycopg2==2.7.5
 pid==3.0.4
-

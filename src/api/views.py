@@ -417,7 +417,6 @@ class ModelRunView(ViewSet):
         serializer = ModelRunSerializer(run, many=False)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
-    @transaction.atomic()
     def create(self, request):
         """Create and start a new Model run
 
@@ -469,7 +468,6 @@ class ModelRunView(ViewSet):
 
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
-    @transaction.atomic()
     def destroy(self, request, pk=None):
         """Delete a run from the db
 

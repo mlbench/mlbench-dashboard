@@ -1,11 +1,14 @@
+import datetime as dt
 import json
+import random
 from ast import literal_eval
 from unittest.mock import MagicMock, create_autospec, patch
 
+from django.utils import timezone
 from rest_framework import status
 from rest_framework.test import APITestCase
 
-from api.models import ModelRun
+from api.models import KubeMetric, ModelRun
 from api.utils.pod_monitor import _check_and_create_new_pods
 
 
@@ -124,3 +127,79 @@ class ModelRunTests(APITestCase):
             # Check if object was created in DB
             runs = ModelRun.objects.all()
             self.assertEqual(len(runs), 0)
+
+
+class KubeMetricTests(APITestCase):
+    names = [
+        "start",
+        "batch_load",
+        "init",
+        "fwd_pass",
+        "comp_loss",
+        "backprop",
+        "agg",
+        "opt_step",
+        "comp_metrics",
+        "end",
+    ]
+
+    def setUp(self):
+        self.run = ModelRun(
+            name="TestRun",
+            num_workers=3,
+            cpu_limit="1000m",
+            image="Testimage",
+            command="Testcommand",
+            backend="mpi",
+            run_on_all_nodes=False,
+            gpu_enabled=False,
+            light_target=True,
+        )
+        self.run.save()
+
+        for i in range(100):
+            for j, name in enumerate(self.names):
+                metric = KubeMetric(
+                    name=name,
+                    date=(
+                        timezone.now() - dt.timedelta(seconds=(100 - i) * 10 + (10 - j))
+                    ),
+                    value=random.random(),
+                    metadata={},
+                    cumulative=False,
+                    model_run=self.run,
+                )
+                metric.save()
+
+    def test_get_metric(self):
+        """
+        Ensure we can get metrics
+        """
+        response = self.client.get(
+            "/api/metrics/{}/?metric_type=run".format(self.run.id), format="json"
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        res = response.json()
+
+        for name in self.names:
+            assert len(res[name]) == 100
+
+        response = self.client.get(
+            "/api/metrics/{}/?metric_type=run&summarize=10".format(self.run.id),
+            format="json",
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        res = response.json()
+
+        for name in self.names:
+            assert len(res[name]) == 10
+
+        response = self.client.get(
+            "/api/metrics/{}/?metric_type=run&last_n=5".format(self.run.id),
+            format="json",
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        res = response.json()
+
+        for name in self.names:
+            assert len(res[name]) == 5
