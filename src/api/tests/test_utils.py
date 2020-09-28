@@ -1,13 +1,12 @@
 import os
 import tempfile
-import threading
 from time import sleep
 from unittest.mock import MagicMock, patch
 
 import docker
 from django.test import TestCase
 from kubernetes import client, config
-from pytest_kind import KindCluster, cluster
+from pytest_kind import KindCluster
 
 from api.models import KubePod, ModelRun
 from api.utils.pod_monitor import (
@@ -19,11 +18,13 @@ from api.utils.run_utils import (
     create_statefulset,
     delete_service,
     delete_statefulset,
-    run_model_job,
 )
 
 # Kubernetes 1.15
-KIND_NODE_IMAGE = "kindest/node:v1.15.12@sha256:d9b939055c1e852fe3d86955ee24976cab46cba518abcb8b13ba70917e6547a6"
+KIND_NODE_IMAGE = os.getenv(
+    "KIND_NODE_IMAGE",
+    "kindest/node:v1.15.12@sha256:d9b939055c1e852fe3d86955ee24976cab46cba518abcb8b13ba70917e6547a6",
+)
 WORKER_TEMPLATE = """
 - role: worker
   image: {kind_node_image}
