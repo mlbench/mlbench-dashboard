@@ -17,7 +17,7 @@ pytest-django==3.8.0
 
 Django==2.2.13
 django-livesync==0.4
-django-constance==2.6.0
+django-constance==2.7.0
 django-picklefield==1.0.0
 djangorestframework==3.9.1
 kubernetes==7.0.0
