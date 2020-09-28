@@ -5,7 +5,7 @@ flake8==3.8.3
 black==19.10b0
 pytest-black==0.3.9
 pre-commit
-tox==3.15.2
+tox==3.20.0
 coverage==4.5.1
 Sphinx==3.1.1
 sphinxcontrib-httpdomain==1.7.0
