@@ -39,8 +39,8 @@ service_template = client.V1Service(
     ),
 )
 
-statefulset_template = client.V1beta2StatefulSet(
-    api_version="apps/v1beta2",
+statefulset_template = client.V1StatefulSet(
+    api_version="apps/v1",
     kind="StatefulSet",
     metadata=client.V1ObjectMeta(
         name="",
@@ -53,7 +53,7 @@ statefulset_template = client.V1beta2StatefulSet(
             "set": "",
         },
     ),
-    spec=client.V1beta2StatefulSetSpec(
+    spec=client.V1StatefulSetSpec(
         replicas=0,
         selector=client.V1LabelSelector(
             match_labels={
@@ -64,7 +64,7 @@ statefulset_template = client.V1beta2StatefulSet(
         ),
         service_name="",
         pod_management_policy="Parallel",
-        update_strategy=client.V1beta2StatefulSetUpdateStrategy(type="RollingUpdate"),
+        update_strategy=client.V1StatefulSetUpdateStrategy(type="RollingUpdate"),
         template=client.V1PodTemplateSpec(
             metadata=client.V1ObjectMeta(
                 labels={
@@ -153,7 +153,7 @@ def create_statefulset(model_run, release_name, namespace, job=None):
         (str): Name of stateful set
     """
     core = client.CoreV1Api()
-    kube_api = client.AppsV1beta2Api()
+    kube_api = client.AppsV1Api()
 
     statefulset_name = "{1}-mlbench-worker-{0}".format(
         release_name, model_run.name
@@ -240,7 +240,7 @@ def delete_statefulset(statefulset_name, namespace, grace_period_seconds=5):
         namespace (str): Namespace on which stateful set was deployed
         grace_period_seconds (int): Grace period for deletion
     """
-    kube_api = client.AppsV1beta2Api()
+    kube_api = client.AppsV1Api()
 
     kube_api.delete_namespaced_stateful_set(
         statefulset_name,

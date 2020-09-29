@@ -36,15 +36,6 @@ containerdConfigPatches:
 - |-
   [plugins."io.containerd.grpc.v1.cri".registry.mirrors."localhost:{reg_port}"]
     endpoint = ["http://{reg_name}:{reg_port}"]
-
-kubeadmConfigPatches:
-- |
-  kind: ClusterConfiguration
-  metadata:
-    name: config
-  apiServer:
-    extraArgs:
-      "runtime-config": "apps/v1beta1=true,apps/v1beta2=true,extensions/v1beta1/daemonsets=true,extensions/v1beta1/deployments=true,extensions/v1beta1/replicasets=true,extensions/v1beta1/networkpolicies=true,extensions/v1beta1/podsecuritypolicies=true"
 nodes:
 - role: control-plane
   image: {kind_node_image}
@@ -305,7 +296,7 @@ class RunUtilsTests(TestCase):
         stateful_set_name = "{1}-mlbench-worker-{0}".format(
             os.getenv("MLBENCH_KUBE_RELEASENAME"), run.name
         ).lower()
-        kube_api = client.AppsV1beta2Api()
+        kube_api = client.AppsV1Api()
         stateful_sets = kube_api.list_namespaced_stateful_set(
             os.environ.get("MLBENCH_NAMESPACE")
         )
@@ -342,7 +333,7 @@ class RunUtilsTests(TestCase):
         )
         # Wait for stateful set to delete
         sleep(30)
-        kube_api = client.AppsV1beta2Api()
+        kube_api = client.AppsV1Api()
         core = client.CoreV1Api()
         stateful_sets = kube_api.list_namespaced_stateful_set(
             os.environ.get("MLBENCH_NAMESPACE")
