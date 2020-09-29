@@ -3,9 +3,14 @@ dist: xenial
 env:
   global:
     - docker_repository=mlbench
-
+    - KIND_KUBE_1_15=kindest/node:v1.15.12@sha256:d9b939055c1e852fe3d86955ee24976cab46cba518abcb8b13ba70917e6547a6
+    - KIND_KUBE_1_16=kindest/node:v1.16.15@sha256:a89c771f7de234e6547d43695c7ab047809ffc71a0c3b65aa54eda051c45ed20
+    - KIND_KUBE_1_17=kindest/node:v1.17.11@sha256:5240a7a2c34bf241afb54ac05669f8a46661912eab05705d660971eeb12f6555
+    - KIND_KUBE_1_18=kindest/node:v1.18.8@sha256:f4bcc97a0ad6e7abaf3f643d890add7efe6ee4ab90baeb374b4f41a4c95567eb
+    - KIND_KUBE_1_19=kindest/node:v1.19.1@sha256:98cf5288864662e37115e362b23e4369c8c4a408f99cbc06e58ac30ddc721600
 install:
   - pip install tox
+
 
 jobs:
   include:
@@ -28,7 +33,7 @@ jobs:
       python: 3.7
       name: "Tests (Python 3.7 + Kubernetes 1.15) + coverage"
       env:
-        - KUBE_NODE_IMAGE=kindest/node:v1.15.12@sha256:d9b939055c1e852fe3d86955ee24976cab46cba518abcb8b13ba70917e6547a6
+        - KIND_NODE_IMAGE=KIND_KUBE_1_15
       after_success:
         - bash <(curl -s https://codecov.io/bash)
 
@@ -37,9 +42,28 @@ jobs:
       python: 3.7
       name: "Tests (Python 3.7 + Kubernetes 1.16) + coverage"
       env:
-        - KUBE_NODE_IMAGE=kindest/node:v1.16.15@sha256:a89c771f7de234e6547d43695c7ab047809ffc71a0c3b65aa54eda051c45ed20
-      after_success:
-        - bash <(curl -s https://codecov.io/bash)
+        - KIND_NODE_IMAGE=KIND_KUBE_1_16
+
+    - script: env TOXENV=py37 tox
+      language: python
+      python: 3.7
+      name: "Tests (Python 3.7 + Kubernetes 1.17) + coverage"
+      env:
+        - KIND_NODE_IMAGE=KIND_KUBE_1_17
+
+    - script: env TOXENV=py37 tox
+      language: python
+      python: 3.7
+      name: "Tests (Python 3.7 + Kubernetes 1.18) + coverage"
+      env:
+        - KIND_NODE_IMAGE=KIND_KUBE_1_18
+
+    - script: env TOXENV=py37 tox
+      language: python
+      python: 3.7
+      name: "Tests (Python 3.7 + Kubernetes 1.19) + coverage"
+      env:
+        - KIND_NODE_IMAGE=KIND_KUBE_1_19
 
     - script: env TOXENV=docs tox
       language: python
