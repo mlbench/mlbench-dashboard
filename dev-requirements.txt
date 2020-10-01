@@ -9,7 +9,7 @@ bumpversion==0.6.0
 codecov==2.1.9
 coverage==5.3
 tox==3.20.0
-pytest==6.0.2
+pytest==6.1.0
 pytest-runner==5.2
 pytest-django==3.10.0
 pytest-kind==20.5.3
