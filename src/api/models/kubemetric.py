@@ -1,5 +1,7 @@
 from django.db import models
-from api.models import KubePod, ModelRun
+
+from api.models.kubepod import KubePod
+from api.models.modelrun import ModelRun
 
 
 class KubeMetric(models.Model):

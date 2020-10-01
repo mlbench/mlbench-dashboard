@@ -6,7 +6,7 @@ from django.conf import settings
 from django.shortcuts import render
 from rq.job import Job
 
-from api.models import ModelRun, KubePod
+from api.models import KubePod, ModelRun
 
 
 # Create your views here.

@@ -1,7 +1,6 @@
 import os
 import re
 
-
 _filename_ascii_strip_re = re.compile(r"[^A-Za-z0-9_.-]")
 _windows_device_files = (
     "CON",

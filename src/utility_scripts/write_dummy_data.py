@@ -1,8 +1,9 @@
 import asyncio
-import requests
-import json
 import datetime
+import json
 import random
+
+import requests
 
 url = "http://10.192.0.2:30260/api/metrics/"
 

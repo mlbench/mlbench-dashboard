@@ -12,6 +12,7 @@ import pytz
 from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.serializers.json import DjangoJSONEncoder
+from django.db import transaction
 from django.db.models import Q
 from django.utils.dateparse import parse_datetime
 from rest_framework import status
@@ -19,15 +20,14 @@ from rest_framework.response import Response
 from rest_framework.viewsets import ViewSet
 from rq.job import Job
 
-from api.models import KubePod, KubeMetric, ModelRun
-from api.serializers import KubePodSerializer, ModelRunSerializer, KubeMetricsSerializer
-from api.utils.run_utils import delete_statefulset, delete_service
+from api.models import KubeMetric, KubePod, ModelRun
+from api.serializers import KubeMetricsSerializer, KubePodSerializer, ModelRunSerializer
+from api.utils.run_utils import delete_service, delete_statefulset, run_model_job
 from api.utils.utils import secure_filename
 
 
 class KubePodView(ViewSet):
-    """Handles the /api/pods endpoint
-    """
+    """Handles the /api/pods endpoint"""
 
     serializer_class = KubePodSerializer
 
@@ -39,8 +39,7 @@ class KubePodView(ViewSet):
 
 
 class KubeMetricsView(ViewSet):
-    """Handles the /api/metrics endpoint
-    """
+    """Handles the /api/metrics endpoint"""
 
     def __format_result(self, metrics, q, summarize, last_n):
         # get available kind of metrics
@@ -373,8 +372,7 @@ class KubeMetricsView(ViewSet):
 
 
 class ModelRunView(ViewSet):
-    """Handles Model Runs
-    """
+    """Handles Model Runs"""
 
     serializer_class = ModelRunSerializer
 
@@ -420,7 +418,7 @@ class ModelRunView(ViewSet):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     def create(self, request):
-        """ Create and start a new Model run
+        """Create and start a new Model run
 
         Arguments:
             request {[Django request]} -- The request object
@@ -428,7 +426,6 @@ class ModelRunView(ViewSet):
         Returns:
             Json -- Returns posted values
         """
-        # TODO: lock table, otherwise there might be concurrency conflicts
         d = request.data
 
         image = d["image_name"]
@@ -465,7 +462,7 @@ class ModelRunView(ViewSet):
             light_target=d["light_target"] == "true",
         )
 
-        run.start()
+        run.start(run_model_job=run_model_job)
 
         serializer = ModelRunSerializer(run, many=False)
 
@@ -493,10 +490,13 @@ class ModelRunView(ViewSet):
             try:
                 delete_statefulset(statefulset_name, ns)
                 delete_service(statefulset_name, ns)
+                run.delete()
             except (BaseException, Exception) as e:
                 logger.error("Couldn't delete run {}: {}".format(run.id, repr(e)))
-
-            run.delete()
+                return Response(
+                    {"status": "ERROR", "message": "Could not delete run"},
+                    status=status.HTTP_304_NOT_MODIFIED,
+                )
 
         return Response(
             {"status": "Deleted", "message": "The run was deleted"},
