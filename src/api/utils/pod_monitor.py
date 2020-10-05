@@ -8,9 +8,9 @@ import pytz
 from django.db import transaction
 from django.db.models import Max
 from django_rq import job
-from rest_framework.exceptions import APIException
 from kubernetes import client, config
 from pid import PidFile, PidFileError
+from rest_framework.exceptions import APIException
 
 from api.models.kubepod import KubePod
 
@@ -69,7 +69,7 @@ def _check_and_update_pod_phase():
         try:
             ret = v1.read_namespaced_pod(name=pod.name, namespace=ns)
         except APIException as e:
-            if e.satus == 404: # pod not found
+            if e.satus == 404:  # pod not found
                 pod.delete()
                 continue
             else:

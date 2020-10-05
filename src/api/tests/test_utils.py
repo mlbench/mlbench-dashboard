@@ -42,9 +42,9 @@ nodes:
 {workers}
 """
 
-REG_NAME = "kind-registry"
-REG_PORT = "5000"
-TEST_IMAGE = "localhost:5000/mlbench_worker:latest"
+REG_NAME = os.getenv("REG_NAME", "kind-registry")
+REG_PORT = os.getenv("REG_PORT", "5000")
+TEST_IMAGE = os.getenv("TEST_IMAGE", "localhost:5000/mlbench_worker:latest")
 
 RUN_NAME = "Run{}"
 
