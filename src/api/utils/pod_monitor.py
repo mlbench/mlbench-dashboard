@@ -8,6 +8,7 @@ import pytz
 from django.db import transaction
 from django.db.models import Max
 from django_rq import job
+from rest_framework.exceptions import APIException
 from kubernetes import client, config
 from pid import PidFile, PidFileError
 
@@ -54,6 +55,9 @@ def _check_and_create_new_pods():
 
 
 def _check_and_update_pod_phase():
+    logger = logging.getLogger("rq.worker")
+
+    logger.info("Checking pod phase")
     config.load_incluster_config()
     v1 = client.CoreV1Api()
 
@@ -62,7 +66,15 @@ def _check_and_update_pod_phase():
     pods = KubePod.objects.all()
 
     for pod in pods:
-        ret = v1.read_namespaced_pod(name=pod.name, namespace=ns)
+        try:
+            ret = v1.read_namespaced_pod(name=pod.name, namespace=ns)
+        except APIException as e:
+            if e.satus == 404: # pod not found
+                pod.delete()
+                continue
+            else:
+                raise e
+
         phase = ret.status.phase
         node_name = ret.spec.node_name
 

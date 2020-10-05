@@ -10,7 +10,7 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/2.0/ref/settings/
 """
 
-import os
+import os, sys
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -154,6 +154,39 @@ RQ_QUEUES = {
         "DEFAULT_TIMEOUT": 360,
     },
 }
+
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "formatters": {
+        "rq_console": {
+            "format": "%(asctime)s %(message)s",
+            "datefmt": "%H:%M:%S",
+        },
+    },
+    "handlers": {
+        "rq_console": {
+            "level": "DEBUG",
+            "class": "rq.utils.ColorizingStreamHandler",
+            "formatter": "rq_console",
+            "stream": sys.stdout,
+            "exclude": ["%(asctime)s"],
+        },
+        "rq_console_error": {  # stderr
+            "level": "ERROR",
+            "class": "rq.utils.ColorizingStreamHandler",
+            "formatter": "rq_console",
+            "exclude": ["%(asctime)s"],
+        },
+    },
+    'loggers': {
+        "rq.worker": {
+            "handlers": ["rq_console", "rq_console_error"],
+            "level": "DEBUG"
+        },
+    }
+}
+
 
 FIXTURE_DIRS = ("api/fixtures/",)
 
