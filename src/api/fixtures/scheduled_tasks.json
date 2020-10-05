@@ -7,7 +7,7 @@
         "queue": "high",
         "callable": "api.utils.pod_monitor.check_new_pods",
         "enabled": true,
-        "interval": 30,
+        "interval": 5,
         "interval_unit": "seconds",
         "scheduled_time": "2019-01-01T00:00:00.000+00:00",
         "result_ttl": 120

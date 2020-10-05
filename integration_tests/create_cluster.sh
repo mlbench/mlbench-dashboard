@@ -44,7 +44,9 @@ helm template ${RELEASE_NAME}-2 mlbench-helm/ \
   --set limits.cpu=1 --set limits.gpu=0 --set limits.workers=1 \
   --set master.image.tag=travis-ci-test --set master.image.repository=localhost:5000/mlbench_master | kubectl apply -f -
 
-./wait_until_pods_ready.sh 30 2
+sleep 2
+
+./wait_until_pods_ready.sh 2 10
 
 kubectl get pods
 
