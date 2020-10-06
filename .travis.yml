@@ -19,69 +19,69 @@ before_script:
 
 jobs:
   include:
-#    - stage: tests
-#      language: python
-#      python: 3.7
-#      services: docker
-#
-#      name: "Black linting"
-#      script: env TOXENV=black tox
-#
-#    - script: env TOXENV=isort tox
-#      language: python
-#      python: 3.7
-#      name: "Isort linting"
-#
-#    - script: env TOXENV=py37 tox
-#      language: python
-#      python: 3.7
-#      name: "Tests (Python 3.7 + Kubernetes 1.15) + coverage"
-#      env:
-#        - KIND_NODE_IMAGE=$KIND_KUBE_1_15
-#      after_success:
-#        - bash <(curl -s https://codecov.io/bash)
-#
-#    - script: env TOXENV=py37 tox
-#      language: python
-#      python: 3.7
-#      name: "Tests (Python 3.7 + Kubernetes 1.16) + coverage"
-#      env:
-#        - KIND_NODE_IMAGE=$KIND_KUBE_1_16
-#
-#    - script: env TOXENV=py37 tox
-#      language: python
-#      python: 3.7
-#      name: "Tests (Python 3.7 + Kubernetes 1.17) + coverage"
-#      env:
-#        - KIND_NODE_IMAGE=$KIND_KUBE_1_17
-#
-#    - script: env TOXENV=py37 tox
-#      language: python
-#      python: 3.7
-#      name: "Tests (Python 3.7 + Kubernetes 1.18) + coverage"
-#      env:
-#        - KIND_NODE_IMAGE=$KIND_KUBE_1_18
-#
-#    - script: env TOXENV=py37 tox
-#      language: python
-#      python: 3.7
-#      name: "Tests (Python 3.7 + Kubernetes 1.19) + coverage"
-#      env:
-#        - KIND_NODE_IMAGE=$KIND_KUBE_1_19
-#
-#    - script: env TOXENV=docs tox
-#      language: python
-#      python: 3.7
-#      name: "Documentation"
-#    - stage: build docker
-#      services: docker
-#      language: shell
-#      install: skip
-#      name: "Build docker image (Branch)"
-#      before_script: echo "$DOCKER_PASSWORD" | docker login --username "$DOCKER_USERNAME" --password-stdin
-#      script:
-#        - docker build -f Docker/Dockerfile -t ${DOCKER_REPOSITORY}/mlbench_master:travis-ci-test .
-#        - docker push ${DOCKER_REPOSITORY}/mlbench_master:travis-ci-test
+    - stage: tests
+      language: python
+      python: 3.7
+      services: docker
+
+      name: "Black linting"
+      script: env TOXENV=black tox
+
+    - script: env TOXENV=isort tox
+      language: python
+      python: 3.7
+      name: "Isort linting"
+
+    - script: env TOXENV=py37 tox
+      language: python
+      python: 3.7
+      name: "Tests (Python 3.7 + Kubernetes 1.15) + coverage"
+      env:
+        - KIND_NODE_IMAGE=$KIND_KUBE_1_15
+      after_success:
+        - bash <(curl -s https://codecov.io/bash)
+
+    - script: env TOXENV=py37 tox
+      language: python
+      python: 3.7
+      name: "Tests (Python 3.7 + Kubernetes 1.16) + coverage"
+      env:
+        - KIND_NODE_IMAGE=$KIND_KUBE_1_16
+
+    - script: env TOXENV=py37 tox
+      language: python
+      python: 3.7
+      name: "Tests (Python 3.7 + Kubernetes 1.17) + coverage"
+      env:
+        - KIND_NODE_IMAGE=$KIND_KUBE_1_17
+
+    - script: env TOXENV=py37 tox
+      language: python
+      python: 3.7
+      name: "Tests (Python 3.7 + Kubernetes 1.18) + coverage"
+      env:
+        - KIND_NODE_IMAGE=$KIND_KUBE_1_18
+
+    - script: env TOXENV=py37 tox
+      language: python
+      python: 3.7
+      name: "Tests (Python 3.7 + Kubernetes 1.19) + coverage"
+      env:
+        - KIND_NODE_IMAGE=$KIND_KUBE_1_19
+
+    - script: env TOXENV=docs tox
+      language: python
+      python: 3.7
+      name: "Documentation"
+    - stage: build docker
+      services: docker
+      language: shell
+      install: skip
+      name: "Build docker image (Branch)"
+      before_script: echo "$DOCKER_PASSWORD" | docker login --username "$DOCKER_USERNAME" --password-stdin
+      script:
+        - docker build -f Docker/Dockerfile -t ${DOCKER_REPOSITORY}/mlbench_master:travis-ci-test .
+        - docker push ${DOCKER_REPOSITORY}/mlbench_master:travis-ci-test
 
     - stage: integration
       language: python
@@ -91,7 +91,8 @@ jobs:
       env:
         - RELEASE_NAME=test
         - KIND_NODE_IMAGE=$KIND_KUBE_1_18
-      script: env TOXENV=integration tox
+        - DOCKER_IMAGE_TAG=travis-ci-test
+      script: ./integration_tests/run_integration.sh
 
     - stage: deploy develop
       if: branch = develop
