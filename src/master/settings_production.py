@@ -164,8 +164,17 @@ LOGGING = {
             "format": "%(asctime)s %(message)s",
             "datefmt": "%H:%M:%S",
         },
+        "simple": {
+            "format": "{levelname} {message}",
+            "style": "{",
+        },
     },
     "handlers": {
+        "console": {
+            "level": "INFO",
+            "class": "logging.StreamHandler",
+            "formatter": "simple",
+        },
         "rq_console": {
             "level": "DEBUG",
             "class": "rq.utils.ColorizingStreamHandler",
@@ -181,10 +190,10 @@ LOGGING = {
         },
     },
     "loggers": {
+        "dashboard": {"handlers": ["console"], "propagate": True},
         "rq.worker": {"handlers": ["rq_console", "rq_console_error"], "level": "DEBUG"},
     },
 }
-
 
 FIXTURE_DIRS = ("api/fixtures/",)
 
