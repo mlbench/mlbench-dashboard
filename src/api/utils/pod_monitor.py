@@ -9,8 +9,9 @@ from django.db import transaction
 from django.db.models import Max
 from django_rq import job
 from kubernetes import client, config
-from pid import PidFile, PidFileError
 from kubernetes.client.rest import ApiException
+from pid import PidFile, PidFileError
+
 from api.models.kubepod import KubePod
 
 
@@ -54,8 +55,6 @@ def _check_and_create_new_pods():
 
 
 def _check_and_update_pod_phase():
-    logger = logging.getLogger("rq.worker")
-
     config.load_incluster_config()
     v1 = client.CoreV1Api()
 
@@ -92,7 +91,6 @@ def check_new_pods():
 
     try:
         with PidFile("new_pods") as p:
-            print(p.pidname)
             _check_and_create_new_pods()
 
     except PidFileError:
@@ -107,7 +105,6 @@ def check_pod_status():
 
     try:
         with PidFile("pod_status") as p:
-            print(p.pidname)
             _check_and_update_pod_phase()
 
     except PidFileError:
@@ -125,8 +122,6 @@ def check_pod_metrics():
     data = None
     try:
         with PidFile("pod_metrics") as p:
-            print(p.pidname)
-
             all_pods = KubePod.objects.all()
             nodes = {p.node_name for p in all_pods}
             all_pods = {p.name: p for p in all_pods}
