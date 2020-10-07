@@ -1,10 +1,12 @@
-import logging
+import os
+import signal
+from time import sleep
 
 import django_rq
 from django.db import models
 from django.db.models.signals import pre_delete
 from django.dispatch import receiver
-from rq.job import Job
+from rq.job import Job, JobStatus
 
 
 class ModelRun(models.Model):
@@ -58,7 +60,11 @@ def _remove_run_job(sender, instance, using, **kwargs):
     """Signal to delete job when ModelRun is deleted"""
     redis_conn = django_rq.get_connection()
     job = Job.fetch(instance.job_id, redis_conn)
-    job.meta["kill"] = True
+    # Kill job pid
+    os.kill(job.meta["workhorse_pid"], signal.SIGTERM)
+
+    while job.get_status() not in [JobStatus.FAILED, JobStatus.FINISHED]:
+        sleep(1)
 
 
 @receiver(pre_delete, sender=ModelRun, dispatch_uid="run_delete_job")

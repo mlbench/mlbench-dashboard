@@ -21,7 +21,7 @@ from rq.job import Job
 
 from api.models import KubeMetric, KubePod, ModelRun
 from api.serializers import KubeMetricsSerializer, KubePodSerializer, ModelRunSerializer
-from api.utils.run_utils import run_model_job
+from api.utils.run_utils import delete_service, delete_statefulset, run_model_job
 from api.utils.utils import secure_filename
 
 
@@ -488,6 +488,8 @@ class ModelRunView(ViewSet):
         if run is not None:
             try:
                 run.delete()
+                delete_statefulset(statefulset_name, ns)
+                delete_service(statefulset_name, ns)
             except (BaseException, Exception) as e:
                 logger.error("Couldn't delete run {}: {}".format(run.id, repr(e)))
                 return Response(

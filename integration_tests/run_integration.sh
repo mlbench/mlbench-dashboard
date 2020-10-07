@@ -66,9 +66,7 @@ helm template ${RELEASE_NAME}-2 ${TMPDIR}/mlbench-helm/ \
 sleep 2
 
 ./wait_until_pods_ready.sh 120 10
-sleep 10
-
-kubectl get pods
+sleep 60
 
 export NODE_IP=$(kubectl get nodes --namespace default -o jsonpath="{.items[0].status.addresses[0].address}")
 export NODE_PORT=$(kubectl get --namespace default -o jsonpath="{.spec.ports[0].nodePort}" services ${RELEASE_NAME}-2-mlbench-master)
@@ -84,5 +82,5 @@ pytest -v
 
 sleep 5
 
-kind delete cluster ${RELEASE_NAME}-2
+kind delete cluster --name ${RELEASE_NAME}-2
 docker network disconnect "kind" ${REG_NAME}

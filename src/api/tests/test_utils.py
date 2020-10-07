@@ -14,10 +14,10 @@ from api.utils.pod_monitor import (
     _check_and_update_pod_phase,
 )
 from api.utils.run_utils import (
-    _delete_service,
-    _delete_statefulset,
     check_nodes_available_for_execution,
     create_statefulset,
+    delete_service,
+    delete_statefulset,
 )
 
 # Kubernetes 1.15
@@ -331,10 +331,11 @@ class RunUtilsTests(TestCase):
         stateful_set_name = "{1}-mlbench-worker-{0}".format(
             os.getenv("MLBENCH_KUBE_RELEASENAME"), run_name
         ).lower()
-        _delete_statefulset(
+        delete_statefulset(
             stateful_set_name,
             os.environ.get("MLBENCH_NAMESPACE"),
             grace_period_seconds=0,
+            in_cluster=False,
         )
         # Wait for stateful set to delete
         sleep(30)
@@ -354,7 +355,9 @@ class RunUtilsTests(TestCase):
         stateful_set_name = "{1}-mlbench-worker-{0}".format(
             os.getenv("MLBENCH_KUBE_RELEASENAME"), run_name
         ).lower()
-        _delete_service(stateful_set_name, os.environ.get("MLBENCH_NAMESPACE"))
+        delete_service(
+            stateful_set_name, os.environ.get("MLBENCH_NAMESPACE"), in_cluster=False
+        )
 
         sleep(1)
         v1 = client.CoreV1Api()

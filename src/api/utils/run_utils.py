@@ -233,15 +233,19 @@ def create_statefulset(model_run, release_name, namespace, job=None):
     return statefulset_name
 
 
-def _delete_statefulset(statefulset_name, namespace, grace_period_seconds=5):
+def delete_statefulset(
+    statefulset_name, namespace, grace_period_seconds=5, in_cluster=True
+):
     """Delete a stateful set in a given namespace
 
     Args:
         statefulset_name (str): Stateful set to delete
         namespace (str): Namespace on which stateful set was deployed
         grace_period_seconds (int): Grace period for deletion
+        in_cluster (bool): Running inside cluster or not. Default `True`
     """
-    config.load_incluster_config()
+    if in_cluster:
+        config.load_incluster_config()
     kube_api = client.AppsV1Api()
 
     kube_api.delete_namespaced_stateful_set(
@@ -253,14 +257,16 @@ def _delete_statefulset(statefulset_name, namespace, grace_period_seconds=5):
     )
 
 
-def _delete_service(statefulset_name, namespace):
+def delete_service(statefulset_name, namespace, in_cluster=True):
     """Deletes a service in a given namespace and stateful set
 
     Args:
         statefulset_name (str): Name of stateful set for service
         namespace (str): Namespace on which it was deployed
+        in_cluster (bool): Running inside cluster or not. Default `True`
     """
-    config.load_incluster_config()
+    if in_cluster:
+        config.load_incluster_config()
     kube_api = client.CoreV1Api()
 
     kube_api.delete_namespaced_service(
@@ -273,7 +279,6 @@ def _delete_service(statefulset_name, namespace):
 
 
 def check_nodes_available_for_execution(model_run, job=None):
-
     if job is not None:
         job.meta["stdout"].append("Waiting for nodes to be available\n")
         job.save()
@@ -319,6 +324,7 @@ def run_model_job(model_run):
     job.meta["stdout"] = []
     job.meta["stderr"] = []
     job.meta["stdout"].append("Initializing run")
+    job.meta["workhorse_pid"] = os.getpid()
     job.save()
 
     model_run.job_id = job.id
@@ -470,8 +476,7 @@ def run_model_job(model_run):
 
         # keep writing openmpi output to job metadata
         cont = True
-        killed = False
-        while any(s.is_open() for s in streams) and cont and not killed:
+        while any(s.is_open() for s in streams) and cont:
             for s in streams:
                 try:
                     if not s.is_open():
@@ -502,7 +507,6 @@ def run_model_job(model_run):
                         "training being finished",
                     ]
                     continue
-            killed = not job.meta.get("kill", False)
 
         model_run.state = ModelRun.FINISHED
         model_run.finished_at = timezone.now()
@@ -515,5 +519,5 @@ def run_model_job(model_run):
         model_run.save()
     finally:
         if set_name:
-            _delete_statefulset(set_name, ns)
-            _delete_service(set_name, ns)
+            delete_statefulset(set_name, ns)
+            delete_service(set_name, ns)
