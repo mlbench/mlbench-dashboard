@@ -12,15 +12,28 @@ env:
     - REG_NAME=kind-registry
     - KUBECTL_VERSION=v1.19.0
     - REG_PORT=5000
+  jobs:
+    - KIND_NODE_IMAGE=$KIND_KUBE_1_15
+    - KIND_NODE_IMAGE=$KIND_KUBE_1_16
+    - KIND_NODE_IMAGE=$KIND_KUBE_1_17
+    - KIND_NODE_IMAGE=$KIND_KUBE_1_18
+    - KIND_NODE_IMAGE=$KIND_KUBE_1_19
+
+language: python
+python: 3.7
+services: docker
+
 install:
   - pip install tox
 
 before_script:
   - docker run -d -p ${REG_PORT}:${REG_PORT} --restart=always --name ${REG_NAME} registry:2 # Run local registry
 
+script: env TOXENV=py37 tox
+
 jobs:
   include:
-    - stage: tests
+    - stage: linting and docs
       language: python
       python: 3.7
       services: docker
@@ -33,47 +46,11 @@ jobs:
       python: 3.7
       name: "Isort linting"
 
-    - script: env TOXENV=py37 tox
-      language: python
-      python: 3.7
-      name: "Tests (Python 3.7 + Kubernetes 1.15) + coverage"
-      env:
-        - KIND_NODE_IMAGE=$KIND_KUBE_1_15
-      after_success:
-        - bash <(curl -s https://codecov.io/bash)
-
-    - script: env TOXENV=py37 tox
-      language: python
-      python: 3.7
-      name: "Tests (Python 3.7 + Kubernetes 1.16) + coverage"
-      env:
-        - KIND_NODE_IMAGE=$KIND_KUBE_1_16
-
-    - script: env TOXENV=py37 tox
-      language: python
-      python: 3.7
-      name: "Tests (Python 3.7 + Kubernetes 1.17) + coverage"
-      env:
-        - KIND_NODE_IMAGE=$KIND_KUBE_1_17
-
-    - script: env TOXENV=py37 tox
-      language: python
-      python: 3.7
-      name: "Tests (Python 3.7 + Kubernetes 1.18) + coverage"
-      env:
-        - KIND_NODE_IMAGE=$KIND_KUBE_1_18
-
-    - script: env TOXENV=py37 tox
-      language: python
-      python: 3.7
-      name: "Tests (Python 3.7 + Kubernetes 1.19) + coverage"
-      env:
-        - KIND_NODE_IMAGE=$KIND_KUBE_1_19
-
     - script: env TOXENV=docs tox
       language: python
       python: 3.7
       name: "Documentation"
+
     - stage: build docker
       services: docker
       language: shell
@@ -103,6 +80,6 @@ jobs:
       before_script:
         - echo "$DOCKER_PASSWORD" | docker login --username "$DOCKER_USERNAME" --password-stdin
         - docker pull ${DOCKER_REPOSITORY}/mlbench_master:travis-ci-test
-        - docker tag ${DOCKER_REPOSITORY}/mlbench_master:travis-ci-test ${DOCKER_REPOSITORY}/mlbench_master:latest
+        - docker tag ${DOCKER_REPOSITORY}/mlbench_master:travis-ci-test ${DOCKER_REPOSITORY}/mlbench_master:develop
       script:
-        - docker push ${DOCKER_REPOSITORY}/mlbench_master:latest
+        - docker push ${DOCKER_REPOSITORY}/mlbench_master:develop
