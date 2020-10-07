@@ -1,6 +1,7 @@
 .PHONY: clean clean-test clean-pyc clean-build docs help
 .DEFAULT_GOAL := help
 
+KIND_NODE_IMAGE ?=  kindest/node:v1.15.12@sha256:d9b939055c1e852fe3d86955ee24976cab46cba518abcb8b13ba70917e6547a6
 define BROWSER_PYSCRIPT
 import os, webbrowser, sys
 
@@ -53,8 +54,7 @@ test: ## run django tests
 	python src/manage.py test
 
 integration-test: ## run integration tests
-	env KIND_NODE_IMAGE=kindest/node:v1.15.12@sha256:d9b939055c1e852fe3d86955ee24976cab46cba518abcb8b13ba70917e6547a6 \
-		REG_NAME=kind-registry REG_PORT=5000 RELEASE_NAME=test DOCKER_REPOSITORY=localhost:5000 DOCKER_IMAGE_TAG=test \
+	env KIND_NODE_IMAGE=$(KIND_NODE_IMAGE) REG_NAME=kind-registry REG_PORT=5000 RELEASE_NAME=test DOCKER_REPOSITORY=localhost:5000 DOCKER_IMAGE_TAG=test \
 		./integration_tests/run_integration.sh
 
 test-all: ## run tests on every Python version with tox

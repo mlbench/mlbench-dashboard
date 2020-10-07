@@ -13,20 +13,26 @@ or the [Main Documentation](https://mlbench.readthedocs.io/)
 
 Development Guide
 -----------------
+For tests to run locally, one should have a running local registry. The steps to deploy one are as follows:
+
+- Deploy local registry: `docker run -d -p 5000:5000 --restart=always --name kind-registry registry:2`
 
 #### Django tests
 To run django tests, you can either use `make test` or `python src/manage.py test`
+Some tests will use the dummy worker image which should be on the local registry. To pull and load it do:
 
+- Pull image: `docker pull mlbench/mlbench_worker:latest`
+- Tag to local: `docker tag mlbench/mlbench_worker:latest localhost:5000/mlbench_worker:latest`
+- Push image: `docker push localhost:5000/mlbench_worker:latest`
 
 #### Integration tests
-For integration tests to run, one needs to have a running local registry, and the image pushed onto it.
 Those tests will deploy the dashboard on a local KIND cluster, and send requests as if it was the client.
 It tests basic functionality of the dashboard and helps with version upgrades.
+They require the image `mlbench_master:test` to be on the local registry. The steps to load it are:
 
-- Deploy local registry: `docker run -d -p 5000:5000 --restart=always --name kind-registry registry:2`
-- Build image `docker build -t localhost:5000/mlbench_master:test -f Docker/Dockerfile .`
-- Push image to local registry `docker push localhost:5000/mlbench_master:test`
-- Run tests `make integration-test`
+- Build image: `docker build -t localhost:5000/mlbench_master:test -f Docker/Dockerfile .`
+- Push image to local registry: `docker push localhost:5000/mlbench_master:test`
+- Run tests: `make integration-test`
 
 By default, the tests (integration and django) will be run using Kubernetes v1.15. To change that, you can prepend the test command with 
 `env KIND_NODE_IMAGE=<image>` and the list of images is:
