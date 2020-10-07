@@ -24,7 +24,7 @@ else
   echo "helm found, skipping install"
 fi
 
-if ! command -v helm &> /dev/null
+if ! command -v kind &> /dev/null
 then
   echo "Installing kind"
   curl -Lo ./kind "https://kind.sigs.k8s.io/dl/v0.9.0/kind-$(uname)-amd64"

@@ -54,7 +54,8 @@ test: ## run django tests
 	python src/manage.py test
 
 integration-test: ## run integration tests
-	env KIND_NODE_IMAGE=$(KIND_NODE_IMAGE) REG_NAME=kind-registry REG_PORT=5000 RELEASE_NAME=test DOCKER_REPOSITORY=localhost:5000 DOCKER_IMAGE_TAG=test \
+	env KIND_NODE_IMAGE=$(KIND_NODE_IMAGE) REG_NAME=kind-registry REG_PORT=5000 RELEASE_NAME=test \
+	DOCKER_REPOSITORY=localhost:5000 DOCKER_IMAGE_TAG=test KUBECTL_VERSION=v1.19.0\
 		./integration_tests/run_integration.sh
 
 test-all: ## run tests on every Python version with tox
