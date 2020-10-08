@@ -9,6 +9,7 @@ from django.db import transaction
 from django.db.models import Max
 from django_rq import job
 from kubernetes import client, config
+from kubernetes.client.rest import ApiException
 from pid import PidFile, PidFileError
 
 from api.models.kubepod import KubePod
@@ -62,7 +63,15 @@ def _check_and_update_pod_phase():
     pods = KubePod.objects.all()
 
     for pod in pods:
-        ret = v1.read_namespaced_pod(name=pod.name, namespace=ns)
+        try:
+            ret = v1.read_namespaced_pod(name=pod.name, namespace=ns)
+        except ApiException as e:
+            if e.status == 404:  # pod not found
+                pod.delete()
+                continue
+            else:
+                raise e
+
         phase = ret.status.phase
         node_name = ret.spec.node_name
 
@@ -82,7 +91,6 @@ def check_new_pods():
 
     try:
         with PidFile("new_pods") as p:
-            print(p.pidname)
             _check_and_create_new_pods()
 
     except PidFileError:
@@ -97,7 +105,6 @@ def check_pod_status():
 
     try:
         with PidFile("pod_status") as p:
-            print(p.pidname)
             _check_and_update_pod_phase()
 
     except PidFileError:
@@ -115,8 +122,6 @@ def check_pod_metrics():
     data = None
     try:
         with PidFile("pod_metrics") as p:
-            print(p.pidname)
-
             all_pods = KubePod.objects.all()
             nodes = {p.node_name for p in all_pods}
             all_pods = {p.name: p for p in all_pods}

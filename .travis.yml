@@ -2,23 +2,38 @@ os: linux
 dist: xenial
 env:
   global:
-    - docker_repository=mlbench
+    - DOCKER_REPOSITORY=mlbench
+    - DOCKER_IMAGE_TAG=travis-ci-test
     - KIND_KUBE_1_15=kindest/node:v1.15.12@sha256:d9b939055c1e852fe3d86955ee24976cab46cba518abcb8b13ba70917e6547a6
     - KIND_KUBE_1_16=kindest/node:v1.16.15@sha256:a89c771f7de234e6547d43695c7ab047809ffc71a0c3b65aa54eda051c45ed20
     - KIND_KUBE_1_17=kindest/node:v1.17.11@sha256:5240a7a2c34bf241afb54ac05669f8a46661912eab05705d660971eeb12f6555
     - KIND_KUBE_1_18=kindest/node:v1.18.8@sha256:f4bcc97a0ad6e7abaf3f643d890add7efe6ee4ab90baeb374b4f41a4c95567eb
     - KIND_KUBE_1_19=kindest/node:v1.19.1@sha256:98cf5288864662e37115e362b23e4369c8c4a408f99cbc06e58ac30ddc721600
+    - REG_NAME=kind-registry
+    - KUBECTL_VERSION=v1.19.0
+    - REG_PORT=5000
+  jobs:
+    - KIND_NODE_IMAGE=$KIND_KUBE_1_15
+    - KIND_NODE_IMAGE=$KIND_KUBE_1_16
+    - KIND_NODE_IMAGE=$KIND_KUBE_1_17
+    - KIND_NODE_IMAGE=$KIND_KUBE_1_18
+    - KIND_NODE_IMAGE=$KIND_KUBE_1_19
+
+language: python
+python: 3.7
+services: docker
+
 install:
   - pip install tox
 
+script: env TOXENV=py37 tox
 
 jobs:
   include:
-    - stage: tests
+    - stage: linting and docs
       language: python
       python: 3.7
       services: docker
-
 
       name: "Black linting"
       script: env TOXENV=black tox
@@ -28,43 +43,6 @@ jobs:
       python: 3.7
       name: "Isort linting"
 
-    - script: env TOXENV=py37 tox
-      language: python
-      python: 3.7
-      name: "Tests (Python 3.7 + Kubernetes 1.15) + coverage"
-      env:
-        - KIND_NODE_IMAGE=KIND_KUBE_1_15
-      after_success:
-        - bash <(curl -s https://codecov.io/bash)
-
-    - script: env TOXENV=py37 tox
-      language: python
-      python: 3.7
-      name: "Tests (Python 3.7 + Kubernetes 1.16) + coverage"
-      env:
-        - KIND_NODE_IMAGE=KIND_KUBE_1_16
-
-    - script: env TOXENV=py37 tox
-      language: python
-      python: 3.7
-      name: "Tests (Python 3.7 + Kubernetes 1.17) + coverage"
-      env:
-        - KIND_NODE_IMAGE=KIND_KUBE_1_17
-
-    - script: env TOXENV=py37 tox
-      language: python
-      python: 3.7
-      name: "Tests (Python 3.7 + Kubernetes 1.18) + coverage"
-      env:
-        - KIND_NODE_IMAGE=KIND_KUBE_1_18
-
-    - script: env TOXENV=py37 tox
-      language: python
-      python: 3.7
-      name: "Tests (Python 3.7 + Kubernetes 1.19) + coverage"
-      env:
-        - KIND_NODE_IMAGE=KIND_KUBE_1_19
-
     - script: env TOXENV=docs tox
       language: python
       python: 3.7
@@ -73,12 +51,46 @@ jobs:
     - stage: build docker
       services: docker
       language: shell
-      install: true
+      install: skip
       name: "Build docker image (Branch)"
       before_script: echo "$DOCKER_PASSWORD" | docker login --username "$DOCKER_USERNAME" --password-stdin
       script:
-        - docker build -f Docker/Dockerfile -t ${docker_repository}/mlbench_master:travis-ci-test .
-        - docker push ${docker_repository}/mlbench_master:travis-ci-test
+        - docker build -f Docker/Dockerfile -t ${DOCKER_REPOSITORY}/mlbench_master:${DOCKER_IMAGE_TAG} .
+        - docker push ${DOCKER_REPOSITORY}/mlbench_master:${DOCKER_IMAGE_TAG}
+
+    - stage: integration
+      language: python
+      python: 3.7
+      services: docker
+      name: "Integration tests (Kubernetes 1.15)"
+      env:
+        - RELEASE_NAME=test
+        - KIND_NODE_IMAGE=$KIND_KUBE_1_15
+      script: env TOXENV=integration tox
+
+    - name: "Integration tests (Kubernetes 1.16)"
+      env:
+        - RELEASE_NAME=test
+        - KIND_NODE_IMAGE=$KIND_KUBE_1_16
+      script: env TOXENV=integration tox
+
+    - name: "Integration tests (Kubernetes 1.17)"
+      env:
+        - RELEASE_NAME=test
+        - KIND_NODE_IMAGE=$KIND_KUBE_1_17
+      script: env TOXENV=integration tox
+
+    - name: "Integration tests (Kubernetes 1.18)"
+      env:
+        - RELEASE_NAME=test
+        - KIND_NODE_IMAGE=$KIND_KUBE_1_18
+      script: env TOXENV=integration tox
+
+    - name: "Integration tests (Kubernetes 1.19)"
+      env:
+        - RELEASE_NAME=test
+        - KIND_NODE_IMAGE=$KIND_KUBE_1_19
+      script: env TOXENV=integration tox
 
     - stage: deploy develop
       if: branch = develop
@@ -88,13 +100,7 @@ jobs:
       name: "Build & deploy docker image (latest)"
       before_script:
         - echo "$DOCKER_PASSWORD" | docker login --username "$DOCKER_USERNAME" --password-stdin
-        - docker pull ${docker_repository}/mlbench_master:travis-ci-test
-        - docker tag ${docker_repository}/mlbench_master:travis-ci-test ${docker_repository}/mlbench_master:develop
+        - docker pull ${DOCKER_REPOSITORY}/mlbench_master:travis-ci-test
+        - docker tag ${DOCKER_REPOSITORY}/mlbench_master:travis-ci-test ${DOCKER_REPOSITORY}/mlbench_master:develop
       script:
-        - docker push ${docker_repository}/mlbench_master:develop
-
-stages:
-  - tests
-  - docs
-  - build docker
-  - deploy develop
+        - docker push ${DOCKER_REPOSITORY}/mlbench_master:develop

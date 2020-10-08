@@ -124,7 +124,8 @@ class ModelRunTests(APITestCase):
 
             response = self.client.delete("/api/runs/{}/".format(run.pk))
 
-            # Check if object was created in DB
+            assert response.status_code == 204
+            # Check if object was deleted in DB
             runs = ModelRun.objects.all()
             self.assertEqual(len(runs), 0)
 

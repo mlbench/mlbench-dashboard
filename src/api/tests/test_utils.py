@@ -42,9 +42,9 @@ nodes:
 {workers}
 """
 
-REG_NAME = "kind-registry"
-REG_PORT = "5000"
-TEST_IMAGE = "localhost:5000/mlbench_worker:latest"
+REG_NAME = os.getenv("REG_NAME", "kind-registry")
+REG_PORT = os.getenv("REG_PORT", "5000")
+TEST_IMAGE = os.getenv("TEST_IMAGE", "localhost:5000/mlbench_worker:latest")
 
 RUN_NAME = "Run{}"
 
@@ -179,6 +179,11 @@ class PodMonitorTests(TestCase):
 
 
 class RunUtilsTests(TestCase):
+    """Tests the functions in `api/utils/run_utils.py`
+
+    Those functions are related to creation/deletion of runs
+    """
+
     @staticmethod
     def connect_kind_to_registry():
         """Connects kind to the local registry.
@@ -330,6 +335,7 @@ class RunUtilsTests(TestCase):
             stateful_set_name,
             os.environ.get("MLBENCH_NAMESPACE"),
             grace_period_seconds=0,
+            in_cluster=False,
         )
         # Wait for stateful set to delete
         sleep(30)
@@ -349,7 +355,9 @@ class RunUtilsTests(TestCase):
         stateful_set_name = "{1}-mlbench-worker-{0}".format(
             os.getenv("MLBENCH_KUBE_RELEASENAME"), run_name
         ).lower()
-        delete_service(stateful_set_name, os.environ.get("MLBENCH_NAMESPACE"))
+        delete_service(
+            stateful_set_name, os.environ.get("MLBENCH_NAMESPACE"), in_cluster=False
+        )
 
         sleep(1)
         v1 = client.CoreV1Api()
@@ -418,37 +426,3 @@ class RunUtilsTests(TestCase):
             available,
             total_workers - run_1.num_workers - run_2.num_workers >= run_3.num_workers,
         )
-
-    # def test_run_model_job(self):
-    #     run = ModelRun(
-    #         name=RUN_NAME.format(4),
-    #         num_workers=1,
-    #         cpu_limit=0.1,
-    #         image=TEST_IMAGE,
-    #         command="python -c \"print(\"Goal Reached!\")",
-    #         backend="gloo",
-    #         run_on_all_nodes=True,
-    #         gpu_enabled=False,
-    #         light_target=False,
-    #     )
-    #
-    #     run.save()
-    #
-    #     with patch("kubernetes.config.load_incluster_config"):
-    #
-    #         max_reties = 20
-    #         def _check_nodes():
-    #             retries = 0
-    #             while retries <= max_reties:
-    #                 try:
-    #                     _check_and_create_new_pods()
-    #                 except Exception as e:
-    #                     print(e)
-    #                 retries += 1
-    #                 sleep(5)
-    #
-    #         thread = threading.Thread(target=_check_nodes)
-    #         thread.start()
-    #         run.start(run_model_job=run_model_job)
-    #         thread.join()
-    #     self.assertEqual(run.state, ModelRun.FINISHED)

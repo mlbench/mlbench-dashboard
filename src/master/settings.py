@@ -171,6 +171,38 @@ else:
 
     RQ_REDIS_ENABLED = True
 
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "formatters": {
+        "rq_console": {
+            "format": "%(asctime)s %(levelname)-8s %(message)s",
+            "datefmt": "%H:%M:%S",
+        },
+    },
+    "handlers": {
+        "console": {
+            "class": "logging.StreamHandler",
+            "formatter": "rq_console",
+        },
+        "rq_console": {
+            "level": "INFO",
+            "class": "rq.utils.ColorizingStreamHandler",
+            "formatter": "rq_console",
+            "stream": sys.stdout,
+        },
+        "rq_console_error": {  # stderr
+            "level": "ERROR",
+            "class": "rq.utils.ColorizingStreamHandler",
+            "formatter": "rq_console",
+            "stream": sys.stderr,
+        },
+    },
+    "loggers": {
+        "dashboard": {"handlers": ["console"], "level": "DEBUG"},
+        "rq.worker": {"handlers": ["rq_console", "rq_console_error"], "level": "DEBUG"},
+    },
+}
 
 if not RQ_REDIS_ENABLED:
     django_rq.queues.get_redis_connection = (

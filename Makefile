@@ -1,6 +1,7 @@
 .PHONY: clean clean-test clean-pyc clean-build docs help
 .DEFAULT_GOAL := help
 
+KIND_NODE_IMAGE ?=  kindest/node:v1.15.12@sha256:d9b939055c1e852fe3d86955ee24976cab46cba518abcb8b13ba70917e6547a6
 define BROWSER_PYSCRIPT
 import os, webbrowser, sys
 
@@ -52,6 +53,11 @@ lint: ## check style with black and isort
 test: ## run django tests
 	python src/manage.py test
 
+integration-test: ## run integration tests
+	env KIND_NODE_IMAGE=$(KIND_NODE_IMAGE) REG_NAME=kind-registry REG_PORT=5000 RELEASE_NAME=test \
+	DOCKER_REPOSITORY=localhost:5000 DOCKER_IMAGE_TAG=test KUBECTL_VERSION=v1.19.0\
+		./integration_tests/run_integration.sh
+
 test-all: ## run tests on every Python version with tox
 	tox
 
@@ -67,5 +73,4 @@ servedocs: docs ## compile the docs watching for changes
 
 publish-docker: ## Build, Tag and Publish a docker file to a local repository. Usage: make publish-docker docker_registry=localhost:5000
 	docker build -f Docker/Dockerfile -t $(docker_registry)/mlbench_master:latest .
-	#docker tag mlbench_master:latest $(docker_registry)/mlbench_master:latest
 	docker push $(docker_registry)/mlbench_master:latest

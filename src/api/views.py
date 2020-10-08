@@ -12,7 +12,6 @@ import pytz
 from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.serializers.json import DjangoJSONEncoder
-from django.db import transaction
 from django.db.models import Q
 from django.utils.dateparse import parse_datetime
 from rest_framework import status
@@ -486,11 +485,13 @@ class ModelRunView(ViewSet):
             release_name, run.name
         ).lower()
 
+        state = run.state
         if run is not None:
             try:
-                delete_statefulset(statefulset_name, ns)
-                delete_service(statefulset_name, ns)
                 run.delete()
+                if state == ModelRun.STARTED:
+                    delete_statefulset(statefulset_name, ns)
+                    delete_service(statefulset_name, ns)
             except (BaseException, Exception) as e:
                 logger.error("Couldn't delete run {}: {}".format(run.id, repr(e)))
                 return Response(
