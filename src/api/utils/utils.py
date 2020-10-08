@@ -2,6 +2,7 @@ import os
 import re
 
 _filename_ascii_strip_re = re.compile(r"[^A-Za-z0-9_.-]")
+_kubernetes_run_name_re = re.compile("[a-z0-9]([-a-z0-9]*[a-z0-9])?")
 _windows_device_files = (
     "CON",
     "AUX",
@@ -61,3 +62,18 @@ def secure_filename(filename):
         filename = "_" + filename
 
     return filename
+
+
+def is_valid_run_name(name):
+    """Checks if a given run name matches with kubernetes' name regex
+
+    Args:
+        name (str): Run Name
+
+    Returns:
+        (bool): If the name is valid for kubernetes
+    """
+    match = _kubernetes_run_name_re.match(name.lower())
+    match_length = match.end() - match.start()
+
+    return match_length == len(name)
