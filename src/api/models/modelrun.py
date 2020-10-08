@@ -60,11 +60,15 @@ def _remove_run_job(sender, instance, using, **kwargs):
     """Signal to delete job when ModelRun is deleted"""
     redis_conn = django_rq.get_connection()
     job = Job.fetch(instance.job_id, redis_conn)
-    # Kill job pid
-    os.kill(job.meta["workhorse_pid"], signal.SIGTERM)
 
-    while job.get_status() not in [JobStatus.FAILED, JobStatus.FINISHED]:
-        sleep(1)
+    if job.is_started:
+        # Kill job pid
+        os.kill(job.meta["workhorse_pid"], signal.SIGTERM)
+        while job.get_status() not in [JobStatus.FAILED, JobStatus.FINISHED]:
+            sleep(1)
+    else:
+        # Delete job from queue
+        job.delete()
 
 
 @receiver(pre_delete, sender=ModelRun, dispatch_uid="run_delete_job")

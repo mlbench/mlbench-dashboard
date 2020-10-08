@@ -485,11 +485,13 @@ class ModelRunView(ViewSet):
             release_name, run.name
         ).lower()
 
+        state = run.state
         if run is not None:
             try:
                 run.delete()
-                delete_statefulset(statefulset_name, ns)
-                delete_service(statefulset_name, ns)
+                if state == ModelRun.STARTED:
+                    delete_statefulset(statefulset_name, ns)
+                    delete_service(statefulset_name, ns)
             except (BaseException, Exception) as e:
                 logger.error("Couldn't delete run {}: {}".format(run.id, repr(e)))
                 return Response(

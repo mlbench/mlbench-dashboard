@@ -168,6 +168,18 @@ def test_integration_1():
     assert not statefulset_exists(s_name)
     assert not service_exists(s_name)
 
+    sleep(1)
+
+    response = requests.delete(
+        os.path.join(DASHBOARD_URL, "api/runs/{}/".format(run_id))
+    )
+
+    sleep(1)
+    assert response.status_code == 204
+
+    model_run = get_modelrun(name)
+    assert model_run is None
+
 
 def test_integration_2():
     name = get_random_name(5)
