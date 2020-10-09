@@ -22,7 +22,7 @@ from rq.job import Job
 from api.models import KubeMetric, KubePod, ModelRun
 from api.serializers import KubeMetricsSerializer, KubePodSerializer, ModelRunSerializer
 from api.utils.run_utils import delete_service, delete_statefulset, run_model_job
-from api.utils.utils import secure_filename
+from api.utils.utils import is_valid_run_name, secure_filename
 
 
 class KubePodView(ViewSet):
@@ -430,6 +430,12 @@ class ModelRunView(ViewSet):
         image = d["image_name"]
         backend = d["backend"].lower()
         gpu = False
+
+        if not is_valid_run_name(d["name"]):
+            return Response(
+                {"status": "ERROR", "message": "Invalid run name {}".format(d["name"])},
+                status=status.HTTP_304_NOT_MODIFIED,
+            )
 
         if image == "custom_image":
             image = d["custom_image_name"]

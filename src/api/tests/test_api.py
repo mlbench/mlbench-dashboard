@@ -129,6 +129,28 @@ class ModelRunTests(APITestCase):
             runs = ModelRun.objects.all()
             self.assertEqual(len(runs), 0)
 
+    def test_invalid_run_name(self):
+        response = self.client.post(
+            "/api/runs/",
+            {
+                "num_cpus": "1.0",
+                "name": "Run1 but with spaces",
+                "num_workers": 1,
+                "image_name": "custom_image",
+                "custom_image_name": "mlbench/mlbench_worker",
+                "custom_image_command": "sleep",
+                "run_all_nodes": True,
+                "light_target": True,
+                "gpu_enabled": "false",
+                "backend": "MPI",
+            },
+            format="json",
+        )
+
+        assert response.status_code == status.HTTP_304_NOT_MODIFIED
+        runs = ModelRun.objects.all()
+        self.assertEqual(len(runs), 0)
+
 
 class KubeMetricTests(APITestCase):
     names = [
