@@ -15,7 +15,7 @@ rq-scheduler==0.8.3
 django-livesync==0.5
 django-constance==2.7.0
 django-picklefield==3.0.1
-djangorestframework==3.11.1
+djangorestframework==3.12.1
 kubernetes==11.0.0
 psycopg2==2.7.5
 pid==3.0.4
