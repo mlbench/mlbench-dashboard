@@ -7,7 +7,7 @@ bumpversion==0.6.0
 
 # Test requirements
 fakeredis==1.4.3
-pytest==6.0.2
+pytest==6.1.2
 pytest-runner==5.2
 pytest-django==3.10.0
 pytest-kind==20.5.3
