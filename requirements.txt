@@ -10,7 +10,7 @@ docker==4.3.1
 Django==2.2.16
 rq==0.12.0
 django-rq==1.2.0
-rq-scheduler==0.8.3
+rq-scheduler==0.10.0
 -e git+https://github.com/istrategylabs/django-rq-scheduler.git@fa76c6ac71068c304aa14ab9df7b13a4b972132e#egg=django-rq-scheduler
 django-livesync==0.5
 django-constance==2.7.0
