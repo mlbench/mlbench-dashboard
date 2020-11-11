@@ -95,11 +95,6 @@
                     <input id="num-cpus" class="form-control" data-slider-id='ex2Slider' type="text" data-slider-min="1" data-slider-max="{{max_cpus}}" data-slider-step="1" data-slider-value="{{max_cpus}}"/>
                     <span id="num-cpus-val">{{max_cpus}}</span>
                 </div>
-                <div class="form-group" style="display:none;">
-                    <label for="max-memory" class="col-form-label">Memory (Mb):</label><br>
-                    <input id="max-memory" class="form-control" data-slider-id='ex3Slider' type="text" data-slider-min="10" data-slider-max="{{max_memory}}" data-slider-step="1" data-slider-value="{{max_memory}}"/>
-                    <span id="max-memory-val">{{max_memory}}</span>
-                </div>
             </form>
         </div>
         <div class="modal-footer">
@@ -112,6 +107,27 @@
 {% endblock %}
 {% block scripts %}
 <script type="text/javascript">
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                // Does this cookie string begin with the name we want?
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+    const csrftoken = getCookie('csrftoken');
+    $.ajaxSetup({
+    beforeSend: function(xhr, settings) {
+        xhr.setRequestHeader("X-CSRFToken", csrftoken);
+    }
+    });
     $(document).ready(function () {
         var image_settings = {
             {% for image, details in images.items%}
@@ -205,11 +221,6 @@
             $("#num-cpus-val").text(slideEvt.value);
         });
 
-        $("#max-memory").slider({});
-        $("#max-memory").on("slide", function(slideEvt) {
-            $("#max-memory-val").text(slideEvt.value);
-        });
-
         $('#add-run-button').click(function(){
             var form = $(".needs-validation")[0];
             if (form.checkValidity() === false) {
@@ -224,7 +235,6 @@
                     name: $('#run-name').val(),
                     num_workers: $('#num-workers').val(),
                     num_cpus: $('#num-cpus').val(),
-                    max_memory: $('#max-memory').val(),
                     image_name: $('#image-name').val(),
                     backend: $("#backend").val(),
                     custom_image_name: $('#custom-image-name').val(),
