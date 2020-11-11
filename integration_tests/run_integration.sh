@@ -80,7 +80,10 @@ rm KIND_CONFIG
 
 pytest -v
 
+passed = $?
 sleep 5
 
 kind delete cluster --name ${RELEASE_NAME}-2
 docker network disconnect "kind" ${REG_NAME}
+
+exit $(passed)
