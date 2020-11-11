@@ -180,6 +180,8 @@ def test_integration_1():
     model_run = get_modelrun(name)
     assert model_run is None
 
+    sleep(10)
+
 
 def test_integration_2():
     name = get_random_name(5)
