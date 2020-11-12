@@ -48,7 +48,6 @@ def runs(request):
             "worker_ticks": ", ".join(worker_ticks),
             "worker_tick_labels": ", ".join('"{}"'.format(i) for i in worker_ticks),
             "max_cpus": max_cpu,
-            "max_memory": 30000,
             "images": settings.MLBENCH_IMAGES,
             "backends": settings.MLBENCH_BACKENDS,
         },
