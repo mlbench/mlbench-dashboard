@@ -203,6 +203,7 @@ def test_integration_2():
     pod_name = "{}-mlbench-worker-{}-2-0".format(name, RELEASE_NAME)
     assert response.status_code == 201  # Created
     wait_for_pod(pod_name)
+    sleep(5)
     check_pod_number(1)
 
     model_run = get_modelrun(name)
