@@ -202,7 +202,7 @@ MPI_COMMAND = (
 
 # available images. [("Name", "image", "command", gpu-supported)]
 MLBENCH_IMAGES = {
-    "mlbench/mlbench/pytorch-cifar10-resnet20-all-reduce:latest": (
+    "mlbench/pytorch-cifar10-resnet20-all-reduce:latest": (
         "PyTorch Cifar-10 ResNet-20",
         "/conda/bin/python /codes/main.py --run_id {run_id} --rank {rank} --hosts {hosts} --backend {backend}",
         True,
