@@ -312,31 +312,7 @@ class KubeMetricsView(ViewSet):
         """
 
         d = request.data
-
-        metric = None
-
-        if "pod_name" in d:
-            pod = KubePod.objects.filter(name=d["pod_name"]).first()
-
-            if pod is None:
-                return Response(
-                    {"status": "Not Found", "message": "Pod not found"},
-                    status=status.HTTP_404_NOT_FOUND,
-                )
-
-            metric = KubeMetric(
-                name=d["name"],
-                date=parse_datetime(d["date"]),
-                value=d["value"],
-                metadata=d["metadata"],
-                cumulative=d["cumulative"],
-                pod=pod,
-            )
-            metric.save()
-
-            return Response(metric, status=status.HTTP_201_CREATED)
-
-        elif "run_id" in d:
+        if "run_id" in d:
             run = ModelRun.objects.get(pk=d["run_id"])
 
             if run is None:
@@ -363,7 +339,7 @@ class KubeMetricsView(ViewSet):
             return Response(
                 {
                     "status": "Bad Request",
-                    "message": "Pod Name or run id have to be supplied",
+                    "message": "Run ID has to be supplied",
                     "data": d,
                 },
                 status=status.HTTP_400_BAD_REQUEST,
