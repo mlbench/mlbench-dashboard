@@ -480,22 +480,26 @@ def run_model_job(model_run):
             for s in streams:
                 try:
                     if not s.is_open():
-                        cont = False
+                        # cont = False
                         continue
                     s.update(timeout=5)
-                    if s.peek_stdout():
+                    if s.peek_stdout(timeout=5):
                         out = s.read_stdout()
                         if "Goal Reached!" in out:
                             cont = False
 
                         job.meta["stdout"] += out.splitlines()
-                    if s.peek_stderr():
+                    if s.peek_stderr(timeout=5):
                         err = s.read_stderr()
                         job.meta["stderr"] += err.splitlines()
 
                     job.save()
                 except websocket.WebSocketConnectionClosedException:
-                    cont = False
+                    # cont = False
+                    job.meta["stderr"] += [
+                        "Websocket exception",
+                        traceback.format_exc(),
+                    ]
                     continue
                 except BrokenPipeError:
                     # Client closed connection prematurely
@@ -507,6 +511,9 @@ def run_model_job(model_run):
                         "training being finished",
                     ]
                     continue
+
+        for s in streams:
+            s.close()
 
         model_run.state = ModelRun.FINISHED
         model_run.finished_at = timezone.now()

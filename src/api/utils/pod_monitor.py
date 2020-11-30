@@ -12,6 +12,7 @@ from kubernetes import client, config
 from kubernetes.client.rest import ApiException
 from pid import PidFile, PidFileError
 
+from api.models.kubemetric import KubeMetric
 from api.models.kubepod import KubePod
 
 
@@ -88,7 +89,6 @@ def check_new_pods():
     """Background task to look for new pods available in cluster.
     Creates corresponding `KubePod` objects in db.
     """
-
     try:
         with PidFile("new_pods") as p:
             _check_and_create_new_pods()
@@ -100,9 +100,6 @@ def check_new_pods():
 @job
 def check_pod_status():
     """Background Task to update status/phase of known pods"""
-
-    from api.models.kubepod import KubePod
-
     try:
         with PidFile("pod_status") as p:
             _check_and_update_pod_phase()
@@ -111,17 +108,37 @@ def check_pod_status():
         return
 
 
+def _update_pod_metric(pod, cont_data, metric_name, value_name, value_denom):
+    newest_time = pod.metrics.filter(name=metric_name).aggregate(Max("date"))[
+        "date__max"
+    ]
+
+    new_time = datetime.strptime(cont_data[metric_name]["time"], "%Y-%m-%dT%H:%M:%SZ")
+    new_time = pytz.utc.localize(new_time)
+
+    if (
+        (not newest_time or new_time > newest_time)
+        and metric_name in cont_data
+        and value_name in cont_data[metric_name]
+    ):
+        metric = KubeMetric(
+            name=metric_name,
+            date=cont_data[metric_name]["time"],
+            value=cont_data[metric_name][value_name] / value_denom,
+            metadata="",
+            cumulative=False,
+            pod=pod,
+        )
+        metric.save()
+
+
 @job
 def check_pod_metrics():
     """Background task to get metrics (cpu/memory etc.) of known pods"""
     logger = logging.getLogger("rq.worker")
-
-    from api.models.kubemetric import KubeMetric
-    from api.models.kubepod import KubePod
-
-    data = None
     try:
         with PidFile("pod_metrics") as p:
+            # Fetch all pods/nodes from database
             all_pods = KubePod.objects.all()
             nodes = {p.node_name for p in all_pods}
             all_pods = {p.name: p for p in all_pods}
@@ -131,6 +148,7 @@ def check_pod_metrics():
 
             pods = []
 
+            # Request stats for eac hnode
             for node in nodes:
                 url = "http://{}:10255/stats/summary/".format(node)
                 try:
@@ -142,6 +160,7 @@ def check_pod_metrics():
                         "Couldn't get performance data: {}, {}".format(url, repr(e))
                     )
 
+            # Now iterate on all found pods
             for pod in pods:
                 if pod["podRef"]["name"] not in all_pods:
                     continue
@@ -153,53 +172,21 @@ def check_pod_metrics():
 
                 cont_data = pod["containers"][0]
 
-                newest_cpu_time = current_pod.metrics.filter(name="cpu").aggregate(
-                    Max("date")
-                )["date__max"]
-
-                new_time = datetime.strptime(
-                    cont_data["cpu"]["time"], "%Y-%m-%dT%H:%M:%SZ"
+                _update_pod_metric(
+                    current_pod,
+                    cont_data,
+                    metric_name="cpu",
+                    value_name="usageNanoCores",
+                    value_denom=10 ** 9,
                 )
-                new_time = pytz.utc.localize(new_time)
 
-                if (
-                    (not newest_cpu_time or new_time > newest_cpu_time)
-                    and "cpu" in cont_data
-                    and "usageNanoCores" in cont_data["cpu"]
-                ):
-                    metric = KubeMetric(
-                        name="cpu",
-                        date=cont_data["cpu"]["time"],
-                        value=cont_data["cpu"]["usageNanoCores"] / 10 ** 9,
-                        metadata="",
-                        cumulative=False,
-                        pod=current_pod,
-                    )
-                    metric.save()
-
-                newest_memory_time = current_pod.metrics.filter(
-                    name="memory"
-                ).aggregate(Max("date"))["date__max"]
-
-                new_time = datetime.strptime(
-                    cont_data["memory"]["time"], "%Y-%m-%dT%H:%M:%SZ"
+                _update_pod_metric(
+                    pod,
+                    cont_data,
+                    metric_name="memory",
+                    value_name="usageBytes",
+                    value_denom=1024 * 1024,
                 )
-                new_time = pytz.utc.localize(new_time)
-
-                if (
-                    (not newest_memory_time or new_time > newest_memory_time)
-                    and "memory" in cont_data
-                    and "usageBytes" in cont_data["memory"]
-                ):
-                    metric = KubeMetric(
-                        name="memory",
-                        date=cont_data["memory"]["time"],
-                        value=cont_data["memory"]["usageBytes"] / (1024 * 1024),
-                        metadata="",
-                        cumulative=False,
-                        pod=current_pod,
-                    )
-                    metric.save()
 
                 newest_network_time = current_pod.metrics.filter(
                     name="network_in"
