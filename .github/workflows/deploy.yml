@@ -20,7 +20,7 @@ jobs:
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
-        - name: "Build docker image"
-          run: |
-            docker build -f Docker/Dockerfile -t mlbench/mlbench_master:latest . && \
-            docker push mlbench/mlbench_master:latest
+      - name: "Build docker image"
+        run: |
+          docker build -f Docker/Dockerfile -t mlbench/mlbench_master:latest . && \
+          docker push mlbench/mlbench_master:latest
