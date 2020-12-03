@@ -34,29 +34,29 @@ jobs:
       - name: "Django tests"
         run: tox
 
-#  deploy-test-image:
-#    runs-on: ubuntu-latest
-#    strategy:
-#      matrix:
-#        python: [ 3.7 ]
-#
-#    steps:
-#      - uses: actions/checkout@v2
-#      - name: "Setup Python"
-#        uses: actions/setup-python@v2
-#        with:
-#          python-version: ${{ matrix.python }}
-#      - name: "Install Tox and any other packages"
-#        run: pip install tox
-#      - name: Login to DockerHub
-#        uses: docker/login-action@v1
-#        with:
-#          username: ${{ secrets.DOCKERHUB_USERNAME }}
-#          password: ${{ secrets.DOCKERHUB_TOKEN }}
-#      - name: "Build docker image (Branch)"
-#        run: |
-#          docker build -f Docker/Dockerfile -t ${DOCKER_REPOSITORY}/mlbench_master:${DOCKER_IMAGE_TAG} . && \
-#          docker push ${DOCKER_REPOSITORY}/mlbench_master:${DOCKER_IMAGE_TAG}
+  deploy-test-image:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python: [ 3.7 ]
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: "Setup Python"
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python }}
+      - name: "Install Tox and any other packages"
+        run: pip install tox
+      - name: Login to DockerHub
+        uses: docker/login-action@v1
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      - name: "Build docker image (Branch)"
+        run: |
+          docker build -f Docker/Dockerfile -t ${DOCKER_REPOSITORY}/mlbench_master:${DOCKER_IMAGE_TAG} . && \
+          docker push ${DOCKER_REPOSITORY}/mlbench_master:${DOCKER_IMAGE_TAG}
 
 #  django-tests:
 #    needs: [deploy-test-image]
@@ -88,7 +88,7 @@ jobs:
 #          tox
 #
   integration-tests:
-#    needs: [deploy-test-image]
+    needs: [deploy-test-image]
     runs-on: ubuntu-latest
     strategy:
       matrix:
