@@ -1,0 +1,115 @@
+name: mlbench-dashboard
+
+on: [push]
+
+env:
+  DOCKER_REPOSITORY: mlbench
+  DOCKER_IMAGE_TAG: travis-ci-test
+  REG_NAME: kind-registry
+  KUBECTL_VERSION:
+  REG_PORT: 5000
+
+jobs:
+  lint-docs-unit:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python: [ 3.7 ]
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: "Setup Python"
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python }}
+      - name: "Install dependencies"
+        run: |
+          python -m pip install --upgrade pip
+          pip install tox tox-gh-actions
+      - name: "Lint Check"
+        # Run tox using the version of Python in `PATH`
+        run: TOXENV=lint python -m tox
+      - name: "Build Docs"
+        run: TOXENV=docs python -m tox
+      - name: "Django tests"
+        run: tox
+
+  deploy-test-image:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python: [ 3.7 ]
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: "Setup Python"
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python }}
+      - name: "Install Tox and any other packages"
+        run: pip install tox
+      - name: Login to DockerHub
+        uses: docker/login-action@v1
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      - name: "Build docker image (Branch)"
+        run: |
+          docker build -f Docker/Dockerfile -t ${DOCKER_REPOSITORY}/mlbench_master:${DOCKER_IMAGE_TAG} . && \
+          docker push ${DOCKER_REPOSITORY}/mlbench_master:${DOCKER_IMAGE_TAG}
+
+#  django-tests:
+#    needs: [deploy-test-image]
+#    runs-on: ubuntu-latest
+#    strategy:
+#      matrix:
+#        python: [ 3.7 ]
+#        node_image: [ "kindest/node:v1.15.12@sha256:d9b939055c1e852fe3d86955ee24976cab46cba518abcb8b13ba70917e6547a6",]
+#                      "kindest/node:v1.16.15@sha256:a89c771f7de234e6547d43695c7ab047809ffc71a0c3b65aa54eda051c45ed20",
+#                      "kindest/node:v1.17.11@sha256:5240a7a2c34bf241afb54ac05669f8a46661912eab05705d660971eeb12f6555",
+#                      "kindest/node:v1.18.8@sha256:f4bcc97a0ad6e7abaf3f643d890add7efe6ee4ab90baeb374b4f41a4c95567eb",
+#                      "kindest/node:v1.19.1@sha256:98cf5288864662e37115e362b23e4369c8c4a408f99cbc06e58ac30ddc721600"]
+#    steps:
+#      - uses: actions/checkout@v2
+#      - name: "Setup Python"
+#        uses: actions/setup-python@v2
+#        with:
+#          python-version: ${{ matrix.python }}
+#      - name: "Install dependencies"
+#        run: |
+#          python -m pip install --upgrade pip
+#          pip install tox tox-gh-actions
+#        id: install
+#      - name: "Django tests"
+#        env:
+#          KIND_NODE_IMAGE: ${{ matrix.node_image }}
+#        run: |
+#          kubectl version --client=true
+#          tox
+#
+  integration-tests:
+    needs: [deploy-test-image]
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python: [ 3.7 ]
+        node_image: [ "kindest/node:v1.15.12@sha256:d9b939055c1e852fe3d86955ee24976cab46cba518abcb8b13ba70917e6547a6",
+                      "kindest/node:v1.16.15@sha256:a89c771f7de234e6547d43695c7ab047809ffc71a0c3b65aa54eda051c45ed20",
+                      "kindest/node:v1.17.11@sha256:5240a7a2c34bf241afb54ac05669f8a46661912eab05705d660971eeb12f6555",
+                      "kindest/node:v1.18.8@sha256:f4bcc97a0ad6e7abaf3f643d890add7efe6ee4ab90baeb374b4f41a4c95567eb",
+                      "kindest/node:v1.19.1@sha256:98cf5288864662e37115e362b23e4369c8c4a408f99cbc06e58ac30ddc721600"]
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: "Setup Python"
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python }}
+      - name: "Install Tox and any other packages"
+        run: pip install tox
+      - name: "Integration tests"
+        env:
+          KIND_NODE_IMAGE: ${{ matrix.node_image }}
+          RELEASE_NAME: test
+        run: env TOXENV=integration tox
+#
