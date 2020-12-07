@@ -1,6 +1,7 @@
 .PHONY: clean clean-test clean-pyc clean-build docs help
 .DEFAULT_GOAL := help
 
+KIND_NODE_IMAGE ?=  kindest/node:v1.15.12@sha256:d9b939055c1e852fe3d86955ee24976cab46cba518abcb8b13ba70917e6547a6
 define BROWSER_PYSCRIPT
 import os, webbrowser, sys
 
@@ -42,25 +43,26 @@ clean-test: ## remove test and coverage artifacts
 	rm -f .coverage
 	rm -fr htmlcov/
 	rm -fr .pytest_cache
+	rm -fr .kube/
+	rm -fr .pytest-kind/
 
-lint: ## check style with flake8
-	flake8 --max-line-length=120 src tests
+lint: ## check style with black and isort
+	black src/
+	isort src/
 
-test: ## run tests quickly with the default Python
-	py.test
+test: ## run django tests
+	python src/manage.py test
+
+integration-test: ## run integration tests
+	env KIND_NODE_IMAGE=$(KIND_NODE_IMAGE) REG_NAME=kind-registry REG_PORT=5000 RELEASE_NAME=test \
+	DOCKER_REPOSITORY=localhost:5000 DOCKER_IMAGE_TAG=test KUBECTL_VERSION=v1.19.0\
+		./integration_tests/run_integration.sh
 
 test-all: ## run tests on every Python version with tox
 	tox
 
 
-
 docs: ## generate Sphinx HTML documentation, including API docs
-	# rm -f docs/mlbench.rst
-	# rm -f docs/modules.rst
-	# sphinx-apidoc -o docs/ mlbench
-	# rm -rf docs/refimpls/*
-	# sphinx-apidoc -o docs/refimpls mlbench/refimpls/pytorch
-	# echo "   refimpls" >> docs/modules.rst
 	$(MAKE) -C docs clean
 	$(MAKE) -C docs html
 	$(BROWSER) docs/_build/html/index.html
@@ -71,5 +73,4 @@ servedocs: docs ## compile the docs watching for changes
 
 publish-docker: ## Build, Tag and Publish a docker file to a local repository. Usage: make publish-docker docker_registry=localhost:5000
 	docker build -f Docker/Dockerfile -t $(docker_registry)/mlbench_master:latest .
-	#docker tag mlbench_master:latest $(docker_registry)/mlbench_master:latest
 	docker push $(docker_registry)/mlbench_master:latest

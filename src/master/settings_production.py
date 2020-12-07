@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/2.0/ref/settings/
 """
 
 import os
+import sys
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -105,9 +106,15 @@ AUTH_PASSWORD_VALIDATORS = [
     {
         "NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator",  # noqa E501
     },
-    {"NAME": "django.contrib.auth.password_validation.MinimumLengthValidator", },
-    {"NAME": "django.contrib.auth.password_validation.CommonPasswordValidator", },
-    {"NAME": "django.contrib.auth.password_validation.NumericPasswordValidator", },
+    {
+        "NAME": "django.contrib.auth.password_validation.MinimumLengthValidator",
+    },
+    {
+        "NAME": "django.contrib.auth.password_validation.CommonPasswordValidator",
+    },
+    {
+        "NAME": "django.contrib.auth.password_validation.NumericPasswordValidator",
+    },
 ]
 
 # Internationalization
@@ -135,8 +142,51 @@ CONSTANCE_BACKEND = "constance.backends.database.DatabaseBackend"
 CONSTANCE_CONFIG = {"FIRST_TIME": (True, "Whether to execute first time setup wizard")}
 
 RQ_QUEUES = {
-    "default": {"HOST": "localhost", "PORT": 6379, "DB": 0, "DEFAULT_TIMEOUT": 360, },
-    "high": {"HOST": "localhost", "PORT": 6379, "DB": 0, "DEFAULT_TIMEOUT": 360, },
+    "default": {
+        "HOST": "localhost",
+        "PORT": 6379,
+        "DB": 0,
+        "DEFAULT_TIMEOUT": 360,
+    },
+    "high": {
+        "HOST": "localhost",
+        "PORT": 6379,
+        "DB": 0,
+        "DEFAULT_TIMEOUT": 360,
+    },
+}
+
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "formatters": {
+        "rq_console": {
+            "format": "%(asctime)s %(levelname)-8s %(message)s",
+            "datefmt": "%H:%M:%S",
+        },
+    },
+    "handlers": {
+        "console": {
+            "class": "logging.StreamHandler",
+            "formatter": "rq_console",
+        },
+        "rq_console": {
+            "level": "INFO",
+            "class": "rq.utils.ColorizingStreamHandler",
+            "formatter": "rq_console",
+            "stream": sys.stdout,
+        },
+        "rq_console_error": {  # stderr
+            "level": "ERROR",
+            "class": "rq.utils.ColorizingStreamHandler",
+            "formatter": "rq_console",
+            "stream": sys.stderr,
+        },
+    },
+    "loggers": {
+        "dashboard": {"handlers": ["console"], "level": "DEBUG"},
+        "rq.worker": {"handlers": ["rq_console", "rq_console_error"], "level": "DEBUG"},
+    },
 }
 
 FIXTURE_DIRS = ("api/fixtures/",)
@@ -144,19 +194,21 @@ FIXTURE_DIRS = ("api/fixtures/",)
 # available backends
 MLBENCH_BACKENDS = ["MPI", "GLOO", "NCCL"]
 
-MPI_COMMAND = "/.openmpi/bin/mpirun --mca btl_tcp_if_exclude docker0,lo"\
-              " -x KUBERNETES_SERVICE_HOST -x KUBERNETES_SERVICE_PORT "\
-              "-x LD_LIBRARY_PATH=/usr/local/nvidia/lib64 --host {hosts} "
+MPI_COMMAND = (
+    "/.openmpi/bin/mpirun --mca btl_tcp_if_exclude docker0,lo"
+    " -x KUBERNETES_SERVICE_HOST -x KUBERNETES_SERVICE_PORT "
+    "-x LD_LIBRARY_PATH=/usr/local/nvidia/lib64 --host {hosts} "
+)
 
 # available images. [("Name", "image", "command", gpu-supported)]
 MLBENCH_IMAGES = {
-    "mlbench/pytorch-cifar10-resnet:latest": (
+    "mlbench/pytorch-cifar10-resnet20-all-reduce:latest": (
         "PyTorch Cifar-10 ResNet-20",
         "/conda/bin/python /codes/main.py --run_id {run_id} --rank {rank} --hosts {hosts} --backend {backend}",
         True,
     ),
-    "mlbench/pytorch-cifar10-resnet-scaling:latest": (
-        "PyTorch Cifar-10 ResNet-20 (Scaling LR)",
+    "mlbench/pytorch-cifar10-resnet20-ddp:latest": (
+        "PyTorch Cifar-10 ResNet-20 (DDP)",
         "/conda/bin/python /codes/main.py --run_id {run_id} --rank {rank} --hosts {hosts} --backend {backend}",
         True,
     ),
@@ -165,8 +217,18 @@ MLBENCH_IMAGES = {
         "/conda/bin/python /codes/main.py --run_id {run_id} --rank {rank} --hosts {hosts} --backend {backend}",
         True,
     ),
-    "mlbench/pytorch-wmt14-gnmt-all-reduce:latest": (
+    "mlbench/pytorch-wikitext2-lstm-all-reduce:latest": (
+        "PyTorch Language Modeling (AWD-LSTM)",
+        "/conda/bin/python /codes/main.py --run_id {run_id} --rank {rank} --hosts {hosts} --backend {backend}",
+        True,
+    ),
+    "mlbench/pytorch-wmt16-gnmt-all-reduce:latest": (
         "PyTorch Machine Translation GNMT",
+        "/conda/bin/python /codes/main.py --run_id {run_id} --rank {rank} --hosts {hosts} --backend {backend}",
+        True,
+    ),
+    "mlbench/pytorch-wmt17-transformer-all-reduce:latest": (
+        "PyTorch Machine Translation Transformer",
         "/conda/bin/python /codes/main.py --run_id {run_id} --rank {rank} --hosts {hosts} --backend {backend}",
         True,
     ),
@@ -174,5 +236,10 @@ MLBENCH_IMAGES = {
         "Tensorflow Cifar-10 ResNet-20",
         "/conda/bin/python /codes/main.py --run_id {run_id} --rank {rank} --hosts {hosts} --backend {backend}",
         False,
+    ),
+    "mlbench/pytorch-backend-benchmark:latest": (
+        "PyTorch Distributed Backend benchmarking",
+        "/conda/bin/python /codes/main.py --run_id {run_id} --rank {rank} --hosts {hosts} --backend {backend}",
+        True,
     ),
 }

@@ -1,13 +1,16 @@
-import django_rq
-from kubernetes import client, config
-import kubernetes.stream as stream
-from rq import get_current_job
-
 import os
+import traceback
 from copy import deepcopy
 from time import sleep
-import traceback
+
+import django_rq
+import kubernetes.stream as stream
 import websocket
+from django.utils import timezone
+from kubernetes import client, config
+from rq import get_current_job
+
+from api.models import KubePod, ModelRun
 from master.settings import MPI_COMMAND
 
 MAX_POD_RETRIES = 20
@@ -37,9 +40,8 @@ service_template = client.V1Service(
     ),
 )
 
-
-statefulset_template = client.V1beta2StatefulSet(
-    api_version="apps/v1beta2",
+statefulset_template = client.V1StatefulSet(
+    api_version="apps/v1",
     kind="StatefulSet",
     metadata=client.V1ObjectMeta(
         name="",
@@ -52,7 +54,7 @@ statefulset_template = client.V1beta2StatefulSet(
             "set": "",
         },
     ),
-    spec=client.V1beta2StatefulSetSpec(
+    spec=client.V1StatefulSetSpec(
         replicas=0,
         selector=client.V1LabelSelector(
             match_labels={
@@ -63,7 +65,7 @@ statefulset_template = client.V1beta2StatefulSet(
         ),
         service_name="",
         pod_management_policy="Parallel",
-        update_strategy=client.V1beta2StatefulSetUpdateStrategy(type="RollingUpdate"),
+        update_strategy=client.V1StatefulSetUpdateStrategy(type="RollingUpdate"),
         template=client.V1PodTemplateSpec(
             metadata=client.V1ObjectMeta(
                 labels={
@@ -138,11 +140,25 @@ statefulset_template = client.V1beta2StatefulSet(
 )
 
 
-def create_statefulset(model_run, name, namespace, job):
-    core = client.CoreV1Api()
-    kube_api = client.AppsV1beta2Api()
+def create_statefulset(model_run, release_name, namespace, job=None):
+    """Creates a stateful set from the given run.
+    The stateful set will have the name [release-name]-mlbench-worker-[model_run.name]
 
-    statefulset_name = "{1}-mlbench-worker-{0}".format(name, model_run.name).lower()
+    Args:
+        model_run (:obj:`ModelRun`): The model run with appropriate values
+        release_name (str): Release name
+        namespace (str): Kubernetes namespace
+        job: Job to write output to
+
+    Returns:
+        (str): Name of stateful set
+    """
+    core = client.CoreV1Api()
+    kube_api = client.AppsV1Api()
+
+    statefulset_name = "{1}-mlbench-worker-{0}".format(
+        release_name, model_run.name
+    ).lower()
 
     # create service
     service = deepcopy(service_template)
@@ -177,8 +193,9 @@ def create_statefulset(model_run, name, namespace, job):
 
     response = kube_api.create_namespaced_stateful_set(namespace, statefulset)
 
-    job.meta["stdout"].append("Waiting for pods to become available\n")
-    job.save()
+    if job is not None:
+        job.meta["stdout"].append("Waiting for pods to become available\n")
+        job.save()
 
     # wait for StatefulSet to be created
     while True:
@@ -187,20 +204,21 @@ def create_statefulset(model_run, name, namespace, job):
         )
         s = response.status
 
-        job.meta["stdout"].append(
-            "Waiting for workers: Current: {}/{}, Replicas: {}/{}, "
-            "Ready: {}, "
-            "Observed Gen: {}/{}".format(
-                s.current_replicas,
-                response.spec.replicas,
-                s.replicas,
-                response.spec.replicas,
-                s.ready_replicas,
-                s.observed_generation,
-                response.metadata.generation,
+        if job is not None:
+            job.meta["stdout"].append(
+                "Waiting for workers: Current: {}/{}, Replicas: {}/{}, "
+                "Ready: {}, "
+                "Observed Gen: {}/{}".format(
+                    s.current_replicas,
+                    response.spec.replicas,
+                    s.replicas,
+                    response.spec.replicas,
+                    s.ready_replicas,
+                    s.observed_generation,
+                    response.metadata.generation,
+                )
             )
-        )
-        job.save()
+            job.save()
 
         if (
             s.current_replicas == response.spec.replicas
@@ -215,38 +233,58 @@ def create_statefulset(model_run, name, namespace, job):
     return statefulset_name
 
 
-def delete_statefulset(statefulset_name, namespace):
-    kube_api = client.AppsV1beta1Api()
+def delete_statefulset(
+    statefulset_name, namespace, grace_period_seconds=5, in_cluster=True
+):
+    """Delete a stateful set in a given namespace
 
-    # scale down before delete
-    kube_api.patch_namespaced_stateful_set(
-        statefulset_name,
-        namespace,
-        [{"op": "replace", "path": "/spec/replicas", "value": 0}],
-    )
+    Args:
+        statefulset_name (str): Stateful set to delete
+        namespace (str): Namespace on which stateful set was deployed
+        grace_period_seconds (int): Grace period for deletion
+        in_cluster (bool): Running inside cluster or not. Default `True`
+    """
+    if in_cluster:
+        config.load_incluster_config()
+    kube_api = client.AppsV1Api()
 
     kube_api.delete_namespaced_stateful_set(
-        statefulset_name, namespace, body=client.V1DeleteOptions()
+        statefulset_name,
+        namespace,
+        pretty=True,
+        grace_period_seconds=grace_period_seconds,
+        propagation_policy="Foreground",
     )
 
 
-def delete_service(statefulset_name, namespace):
+def delete_service(statefulset_name, namespace, in_cluster=True):
+    """Deletes a service in a given namespace and stateful set
+
+    Args:
+        statefulset_name (str): Name of stateful set for service
+        namespace (str): Namespace on which it was deployed
+        in_cluster (bool): Running inside cluster or not. Default `True`
+    """
+    if in_cluster:
+        config.load_incluster_config()
     kube_api = client.CoreV1Api()
 
     kube_api.delete_namespaced_service(
-        statefulset_name, namespace, body=client.V1DeleteOptions()
+        statefulset_name,
+        namespace,
+        body=client.V1DeleteOptions(
+            propagation_policy="Foreground",
+        ),
     )
 
 
-def check_nodes_available_for_execution(model_run, job):
-    from api.models import ModelRun
-
-    job.meta["stdout"].append("Waiting for nodes to be available\n")
-    job.save()
+def check_nodes_available_for_execution(model_run, job=None):
+    if job is not None:
+        job.meta["stdout"].append("Waiting for nodes to be available\n")
+        job.save()
 
     max_workers = int(os.environ.get("MLBENCH_MAX_WORKERS"))
     active_runs = ModelRun.objects.filter(state=ModelRun.STARTED)
-    print(list(active_runs))
 
     utilized_workers = sum(r.num_workers for r in active_runs)
 
@@ -258,7 +296,6 @@ def check_nodes_available_for_execution(model_run, job):
     pending_runs = ModelRun.objects.filter(state=ModelRun.INITIALIZED).order_by(
         "num_workers"
     )
-    print(list(pending_runs))
     for r in pending_runs:
         if r.num_workers > available_workers:
             return False
@@ -279,9 +316,6 @@ def run_model_job(model_run):
         model_run {models.ModelRun} -- the database entry this job is
                                        associated with
     """
-
-    from api.models import ModelRun, KubePod
-
     release_name = os.environ.get("MLBENCH_KUBE_RELEASENAME")
     ns = os.environ.get("MLBENCH_NAMESPACE")
 
@@ -290,6 +324,7 @@ def run_model_job(model_run):
     job.meta["stdout"] = []
     job.meta["stderr"] = []
     job.meta["stdout"].append("Initializing run")
+    job.meta["workhorse_pid"] = os.getpid()
     job.save()
 
     model_run.job_id = job.id
@@ -377,7 +412,10 @@ def run_model_job(model_run):
 
         # Use `question 22 <https://www.open-mpi.org/faq/?category=running#mpirun-hostfile`_ to add slots # noqa: E501
         exec_command = model_run.command.format(
-            hosts=",".join(hosts_with_slots), run_id=model_run.id, rank=0, backend=model_run.backend,
+            hosts=",".join(hosts_with_slots),
+            run_id=model_run.id,
+            rank=0,
+            backend=model_run.backend,
         )
 
         # Add mpirun to run on mpi
@@ -393,6 +431,9 @@ def run_model_job(model_run):
         if model_run.light_target:
             cmd_append += " --light"
 
+        if model_run.use_horovod:
+            cmd_append += "--horovod"
+
         job.meta["command"] = cmd_prepend + exec_command + cmd_append
 
         job.meta["master_name"] = ret.items[0].metadata.name
@@ -405,7 +446,10 @@ def run_model_job(model_run):
             cmd = (
                 cmd_prepend
                 + model_run.command.format(
-                    hosts=",".join(hosts_with_slots), run_id=model_run.id, rank=i, backend=model_run.backend,
+                    hosts=",".join(hosts_with_slots),
+                    run_id=model_run.id,
+                    rank=i,
+                    backend=model_run.backend,
                 )
                 + cmd_append
             ).split(" ")
@@ -436,22 +480,26 @@ def run_model_job(model_run):
             for s in streams:
                 try:
                     if not s.is_open():
-                        cont = False
+                        # cont = False
                         continue
                     s.update(timeout=5)
-                    if s.peek_stdout():
+                    if s.peek_stdout(timeout=5):
                         out = s.read_stdout()
                         if "Goal Reached!" in out:
                             cont = False
 
                         job.meta["stdout"] += out.splitlines()
-                    if s.peek_stderr():
+                    if s.peek_stderr(timeout=5):
                         err = s.read_stderr()
                         job.meta["stderr"] += err.splitlines()
 
                     job.save()
                 except websocket.WebSocketConnectionClosedException:
-                    cont = False
+                    # cont = False
+                    job.meta["stderr"] += [
+                        "Websocket exception",
+                        traceback.format_exc(),
+                    ]
                     continue
                 except BrokenPipeError:
                     # Client closed connection prematurely
@@ -464,7 +512,11 @@ def run_model_job(model_run):
                     ]
                     continue
 
+        for s in streams:
+            s.close()
+
         model_run.state = ModelRun.FINISHED
+        model_run.finished_at = timezone.now()
         model_run.save()
     except (Exception, BaseException):
         model_run.state = ModelRun.FAILED

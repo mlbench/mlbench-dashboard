@@ -1,10 +1,12 @@
-from api.utils.run_utils import run_model_job
+import os
+import signal
+from time import sleep
 
+import django_rq
 from django.db import models
 from django.db.models.signals import pre_delete
 from django.dispatch import receiver
-import django_rq
-from rq.job import Job
+from rq.job import Job, JobStatus
 
 
 class ModelRun(models.Model):
@@ -33,12 +35,15 @@ class ModelRun(models.Model):
     run_on_all_nodes = models.BooleanField(default=False)
     gpu_enabled = models.BooleanField(default=False)
     light_target = models.BooleanField(default=False)
+    use_horovod = models.BooleanField(default=False)
 
     job_metadata = {}
 
-    def start(self):
+    def start(self, run_model_job=None):
         """Saves the model run and starts the RQ job
 
+        Args:
+            run_model_job (:obj:`django_rq.job` | None): Django RQ job to start the run
         Raises:
             ValueError -- Raised if state is not initialized
         """
@@ -47,12 +52,25 @@ class ModelRun(models.Model):
             raise ValueError("Wrong State")
         self.save()
 
-        run_model_job.delay(self)
+        if run_model_job is not None:
+            run_model_job.delay(self)
+
+
+def _remove_run_job(sender, instance, using, **kwargs):
+    """Signal to delete job when ModelRun is deleted"""
+    redis_conn = django_rq.get_connection()
+    job = Job.fetch(instance.job_id, redis_conn)
+
+    if job.is_started:
+        # Kill job pid
+        os.kill(job.meta["workhorse_pid"], signal.SIGTERM)
+        while job.get_status() not in [JobStatus.FAILED, JobStatus.FINISHED]:
+            sleep(1)
+    else:
+        # Delete job from queue
+        job.delete()
 
 
 @receiver(pre_delete, sender=ModelRun, dispatch_uid="run_delete_job")
 def remove_run_job(sender, instance, using, **kwargs):
-    """Signal to delete job when ModelRun is deleted"""
-    redis_conn = django_rq.get_connection()
-    job = Job.fetch(instance.job_id, redis_conn)
-    job.delete()
+    _remove_run_job(sender, instance, using, **kwargs)

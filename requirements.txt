@@ -1,28 +1,21 @@
-pip==10.0.1
-bumpversion==0.5.3
-watchdog==0.8.3
-flake8==3.5.0
-black==19.10b0
-pytest-black==0.3.8
-pre-commit
-tox==2.9.1
-coverage==4.5.1
-Sphinx==1.7.1
-sphinxcontrib-httpdomain==1.7.0
-sphinx-rtd-theme==0.4.0
+# Runtime requirements
+watchdog==0.10.3
 
-pytest==5.3.5
-pytest-runner>=2.11.1
-pytest-django==3.8.0
+# Comment uwsgi when installing locally
+uwsgi==2.0.19.1
+redis==2.10.6
 
-Django==2.2.12
-django-livesync==0.4
-django-constance==2.2.0
-django-picklefield==1.0.0
-djangorestframework==3.9.1
-kubernetes==7.0.0
+
+docker==4.3.1
+Django==2.2.16
+rq==0.12.0
+django-rq==1.2.0
 rq-scheduler==0.8.3
-psycopg2==2.7.5
-pid==2.2.0
 -e git+https://github.com/istrategylabs/django-rq-scheduler.git@fa76c6ac71068c304aa14ab9df7b13a4b972132e#egg=django-rq-scheduler
-
+django-livesync==0.5
+django-constance==2.7.0
+django-picklefield==3.0.1
+djangorestframework==3.11.1
+kubernetes==11.0.0
+psycopg2==2.7.5
+pid==3.0.4

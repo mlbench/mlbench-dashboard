@@ -108,3 +108,6 @@ ENV/
 /docs/refimpls/
 
 src/django-rq-scheduler/
+
+.pytest-kind/
+.kube/
