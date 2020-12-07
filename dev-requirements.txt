@@ -11,5 +11,5 @@ pytest==6.1.2
 pytest-runner==5.2
 pytest-django==4.1.0
 pytest-kind==20.10.0
-requests==2.24.0
+requests==2.25.0
 tox==3.20.1
