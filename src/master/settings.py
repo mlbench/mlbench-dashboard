@@ -13,9 +13,6 @@ https://docs.djangoproject.com/en/2.0/ref/settings/
 import os
 import sys
 
-import django_rq.queues
-from fakeredis import FakeRedis, FakeStrictRedis
-
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
@@ -152,7 +149,7 @@ if "test" in sys.argv:
             "ASYNC": False,
         },
     }
-    RQ_REDIS_ENABLED = False
+    # RQ_REDIS_ENABLED = False
 else:
     RQ_QUEUES = {
         "default": {
@@ -169,7 +166,7 @@ else:
         },
     }
 
-    RQ_REDIS_ENABLED = True
+    # RQ_REDIS_ENABLED = True
 
 LOGGING = {
     "version": 1,
@@ -203,11 +200,6 @@ LOGGING = {
         "rq.worker": {"handlers": ["rq_console", "rq_console_error"], "level": "DEBUG"},
     },
 }
-
-if not RQ_REDIS_ENABLED:
-    django_rq.queues.get_redis_connection = (
-        lambda _, strict: FakeStrictRedis() if strict else FakeRedis()
-    )
 
 FIXTURE_DIRS = ("api/fixtures/",)
 
