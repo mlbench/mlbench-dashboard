@@ -78,7 +78,7 @@ echo "$DASHBOARD_URL"
 rm wait_until_pods_ready.sh
 rm KIND_CONFIG
 
-pytest -v
+pytest -v -s
 
 passed=$?
 sleep 5
