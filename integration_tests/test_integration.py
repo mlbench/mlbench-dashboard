@@ -51,6 +51,10 @@ def check_pod_number(number):
         number (int):
     """
     response = requests.get(os.path.join(DASHBOARD_URL, "api/pods/"))
+    print(response)
+    print(response.content)
+    print(response.content.decode())
+    print(json.loads(response.content.decode()))
 
     assert response.status_code == 200
 
